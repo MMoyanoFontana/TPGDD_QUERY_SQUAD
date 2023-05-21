@@ -1,0 +1,57 @@
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Cupon()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Movilidad()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Localidad()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo()
+ 
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Reclamo()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Operador_Reclamo()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Local()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Dia()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Paquete()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Local()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Direccion_Usuario()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Medio_De_Pago()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Productos()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon_Reclamo()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Horario_Local()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Envio_Mensajeria()
+
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Cupones()

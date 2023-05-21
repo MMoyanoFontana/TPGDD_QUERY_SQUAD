@@ -135,6 +135,38 @@ CREATE TABLE QUERY_SQUAD.Producto_Local(
 )
 GO
 
+CREATE TABLE QUERY_SQUAD.Repartidor(
+    repartidor_id int PRIMARY KEY,
+    repartidor_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
+    repartidor_tipo_movilidad int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Movilidad NOT NULL,
+    repartidor_nombre nvarchar(255),
+    repartidor_apellido nvarchar(255),
+    repartidor_dni decimal(18,0),
+    repartidor_telefono decimal(18,0),
+    repartidor_direccion nvarchar(255),
+    repartidor_email nvarchar(255),
+    repartidor_fecha_nac date
+)
+GO
+
+CREATE TABLE QUERY_SQUAD.Direccion_Usuario(
+    direccion_usuario_id int PRIMARY KEY,
+    direccion_usuario_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
+    direccion_usuario_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
+    direccion_usuario_nombre nvarchar(50),
+    direccion_usuario_direccion nvarchar(255),
+    direccion_usuario_provincia nvarchar(255)
+)
+GO
+
+CREATE TABLE QUERY_SQUAD.Medio_De_Pago(
+    medio_de_pago_id int PRIMARY KEY,
+    medio_de_pago_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
+    medio_de_pago_datos_tarjeta int FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta NOT NULL,
+    medio_de_pago_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,
+)
+GO
+
 CREATE TABLE QUERY_SQUAD.Pedido(
     pedido_nro decimal(18,0) PRIMARY KEY,
     pedido_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
@@ -180,41 +212,24 @@ CREATE TABLE QUERY_SQUAD.Usuario_Cupon(
 )
 GO
 
-CREATE TABLE QUERY_SQUAD.Direccion_Usuario(
-    direccion_usuario_id int PRIMARY KEY,
-    direccion_usuario_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
-    direccion_usuario_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
-    direccion_usuario_nombre nvarchar(50),
-    direccion_usuario_direccion nvarchar(255),
-    direccion_usuario_provincia nvarchar(255)
+CREATE TABLE QUERY_SQUAD.Reclamo(
+    reclamo_nro decimal(18,0) PRIMARY KEY,
+    reclamo_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
+    reclamo_pedido_nro decimal(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL,
+    reclamo_operador_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Operador_Reclamo NOT NULL,
+    reclamo_tipo_reclamo_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Reclamo NOT NULL,
+    reclamo_estado_reclamo_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Estado_Reclamo NOT NULL,
+    reclamo_fecha datetime2(3),
+    reclamo_descripcion nvarchar(255),
+    reclamo_fecha_solucion datetime2(3),
+    reclamo_solucion nvarchar(255),
+    reclamo_calificacion decimal(18,0) 
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Cupon_Reclamo(
     cupon_reclamo_reclamo_id decimal(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Reclamo,
     cupon_reclamo_cupon_nro decimal(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Cupon
-)
-GO
-
-CREATE TABLE QUERY_SQUAD.Medio_De_Pago(
-    medio_de_pago_id int PRIMARY KEY,
-    medio_de_pago_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
-    medio_de_pago_datos_tarjeta int FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta NOT NULL,
-    medio_de_pago_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,
-)
-GO
-
-CREATE TABLE QUERY_SQUAD.Repartidor(
-    repartidor_id int PRIMARY KEY,
-    repartidor_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
-    repartidor_tipo_movilidad int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Movilidad NOT NULL,
-    repartidor_nombre nvarchar(255),
-    repartidor_apellido nvarchar(255),
-    repartidor_dni decimal(18,0),
-    repartidor_telefono decimal(18,0),
-    repartidor_direccion nvarchar(255),
-    repartidor_email nvarchar(255),
-    repartidor_fecha_nac date
 )
 GO
 
@@ -249,21 +264,6 @@ CREATE TABLE QUERY_SQUAD.Envio_Mensajeria(
     envio_mensajeria_fecha_entrega datetime2(3),
     envio_mensajeria_tiempo_estimado decimal(18,2),
     envio_mensajeria_calificacion decimal(18,0)
-)
-GO
-
-CREATE TABLE QUERY_SQUAD.Reclamo(
-    reclamo_nro decimal(18,0) PRIMARY KEY,
-    reclamo_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
-    reclamo_pedido_nro decimal(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL,
-    reclamo_operador_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Operador_Reclamo NOT NULL,
-    reclamo_tipo_reclamo_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Reclamo NOT NULL,
-    reclamo_estado_reclamo_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Estado_Reclamo NOT NULL,
-    reclamo_fecha datetime2(3),
-    reclamo_descripcion nvarchar(255),
-    reclamo_fecha_solucion datetime2(3),
-    reclamo_solucion nvarchar(255),
-    reclamo_calificacion decimal(18,0) 
 )
 GO
 

@@ -13,7 +13,7 @@ CREATE TABLE QUERY_SQUAD.Tipo_Cupon(
 GO
 
 CREATE TABLE QUERY_SQUAD.Estado_Pedido(
-    estado_pedido_id int PRIMARY KEY,
+    estado_pedido_id int PRIMARY KEY IDENTITY,
     estado_pedido_descripcion nvarchar(50)
 )
 GO

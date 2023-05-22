@@ -11,8 +11,11 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido
 AS
-    --Migracion_Estado_Pedido
-Go
+    INSERT INTO QUERY_SQUAD.Estado_Pedido (estado_pedido_descripcion)
+    SELECT DISTINCT PEDIDO_ESTADO
+    FROM gd_esquema.Maestra
+    WHERE PEDIDO_ESTADO IS NOT NULL
+GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario
 AS

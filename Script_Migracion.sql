@@ -1,6 +1,12 @@
+USE [GD1C2023]
+GO
+
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Cupon
 AS
-    --Migracion_Tipo_Cupon
+    INSERT INTO QUERY_SQUAD.Tipo_Cupon (tipo_cupon_descripcion)
+    SELECT DISTINCT Cupon_Tipo
+    FROM gd_esquema.Maestra
+    WHERE CUPON_TIPO IS NOT NULL
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido

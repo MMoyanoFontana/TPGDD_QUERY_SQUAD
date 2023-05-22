@@ -7,7 +7,7 @@ GO
 /* Tablas */
 
 CREATE TABLE QUERY_SQUAD.Tipo_Cupon(
-    tipo_cupon_id int PRIMARY KEY,
+    tipo_cupon_id int PRIMARY KEY IDENTITY,
     tipo_cupon_descripcion nvarchar(50)
 )
 GO

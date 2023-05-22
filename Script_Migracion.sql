@@ -1,57 +1,144 @@
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Cupon()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Cupon
+AS
+    --Migracion_Tipo_Cupon
+GO
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido
+AS
+    --Migracion_Estado_Pedido
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario
+AS
+    --Migracion_Usuario
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta
+AS
+    --Migracion_Datos_Tarjeta
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Movilidad()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Movilidad
+AS
+    --Migracion_Tipo_Movilidad
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago
+AS
+    --Migracion_Tipo_Medio_De_Pago
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Localidad()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Localidad
+AS
+    --Migracion_Localidad
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria
+AS
+    --Migracion_Estado_Envio_Mensajeria
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo
+AS
+    --Migracion_Tipo_Reclamo
+Go
  
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Reclamo()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Reclamo
+AS
+    --Migracion_Estado_Reclamo
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Operador_Reclamo()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Operador_Reclamo
+AS
+    --Migracion_Operador_Reclamo
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Local()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Local
+AS
+    --Migracion_Tipo_Local
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Dia()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Dia
+AS
+    --Migracion_Dia
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Paquete()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Paquete
+AS
+    --Migracion_Paquete
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local
+AS
+    --Migracion_Categoria_Local
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Local()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Local
+AS
+    --Migracion_Local
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local
+AS
+    --Migracion_Producto_Local
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor
+AS
+    --Migracion_Repartidor
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Direccion_Usuario()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Direccion_Usuario
+AS
+    --Migracion_Direccion_Usuario
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Medio_De_Pago()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Medio_De_Pago
+AS
+    --Migracion_Medio_De_Pago
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido
+AS
+    --Migracion_Pedido
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Productos()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Productos
+AS
+    --Migracion_Pedido_Productos
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon
+AS
+    --Migracion_Cupon
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon
+AS
+    --Migracion_Usuario_Cupon
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo
+AS
+    --Migracion_Reclamo
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon_Reclamo()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon_Reclamo
+AS
+    --Migracion_Cupon_Reclamo
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Horario_Local()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Horario_Local
+AS
+    --Migracion_Horario_Local
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Envio_Mensajeria()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Envio_Mensajeria
+AS
+    --Migracion_Envio_Mensajeria
+Go
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Cupones()
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Cupones
+AS
+    --Migracion_Pedido_Cupones
+Go

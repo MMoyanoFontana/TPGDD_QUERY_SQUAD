@@ -19,7 +19,7 @@ CREATE TABLE QUERY_SQUAD.Estado_Pedido(
 GO
 
 CREATE TABLE QUERY_SQUAD.Usuario (
-    usuario_id int PRIMARY KEY,
+    usuario_id int PRIMARY KEY IDENTITY,
     usuario_nombre nvarchar(255),
     usuario_apellido nvarchar(255),
     usuario_dni decimal(18,0),

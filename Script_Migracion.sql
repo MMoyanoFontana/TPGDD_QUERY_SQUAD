@@ -19,8 +19,14 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario
 AS
-    --Migracion_Usuario
+    INSERT INTO QUERY_SQUAD.Usuario (usuario_nombre,usuario_apellido,usuario_dni,usuario_fecha_registro,usuario_telefono,usuario_email,usuario_fecha_nac)
+	SELECT DISTINCT USUARIO_NOMBRE, USUARIO_APELLIDO, USUARIO_DNI, USUARIO_FECHA_REGISTRO, USUARIO_TELEFONO, USUARIO_MAIL, USUARIO_FECHA_NAC
+	FROM gd_esquema.Maestra 
+	WHERE USUARIO_NOMBRE IS NOT NULL AND USUARIO_APELLIDO IS NOT NULL
 Go
+
+--SELECT * FROM QUERY_SQUAD.Usuario
+
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta
 AS

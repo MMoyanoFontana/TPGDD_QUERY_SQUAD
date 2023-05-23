@@ -116,18 +116,41 @@ Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Dia
 AS
-    --Migracion_Dia
+	INSERT INTO QUERY_SQUAD.Dia (dia_nombre)
+    SELECT DISTINCT HORARIO_LOCAL_DIA
+    FROM gd_esquema.Maestra
+    WHERE HORARIO_LOCAL_DIA IS NOT NULL
 Go
+
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Paquete
 AS
-    --Migracion_Paquete
+    INSERT INTO QUERY_SQUAD.Paquete (paquete_tipo, paquete_alto_max, paquete_ancho_max, paquete_largo_max, paquete_peso_max, paquete_tipo_precio)
+    SELECT DISTINCT PAQUETE_TIPO, PAQUETE_ALTO_MAX, PAQUETE_ANCHO_MAX, PAQUETE_LARGO_MAX, PAQUETE_PESO_MAX, PAQUETE_TIPO_PRECIO
+    FROM gd_esquema.Maestra
+    WHERE PAQUETE_TIPO IS NOT NULL
 Go
+
+/*
+
+CREATE FUNCTION QUERY_SQUAD.GetLocalTipo (@localTipo nvarchar(50))
+RETURNS int
+AS
+BEGIN
+	DECLARE @IdTipo int = (SELECT tipo_local_id FROM QUERY_SQUAD.Tipo_Local where tipo_local_tipo = @localTipo)
+	RETURN @IdTipo
+END
+
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local
 AS
-    --Migracion_Categoria_Local
+   INSERT INTO QUERY_SQUAD.Migracion_Categoria_Local (categoria_local_tipo, categoria_local_categoria)
+    SELECT DISTINCT QUERY_SQUAD.GetLocalTipo(LOCAL_TIPO), NULL -- Hay que ver que hacer con las categorias
+    FROM gd_esquema.Maestra
+    WHERE HORARIO_LOCAL_DIA IS NOT NULL
 Go
+*/   -- Ver si hay que hacer el procedure o no por ser datos nuevos
+
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Local
 AS

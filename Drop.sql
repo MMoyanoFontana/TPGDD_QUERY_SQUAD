@@ -130,9 +130,6 @@ GO
 DROP PROCEDURE QUERY_SQUAD.Migracion_Paquete
 GO
 
-DROP PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local
-GO
-
 DROP PROCEDURE QUERY_SQUAD.Migracion_Local
 GO
 

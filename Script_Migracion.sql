@@ -130,33 +130,12 @@ FROM gd_esquema.Maestra
 WHERE PAQUETE_TIPO IS NOT NULL
 GO
 
-/*
-CREATE FUNCTION QUERY_SQUAD.GetLocalTipo (@localTipo nvarchar(50))
-RETURNS int
-AS
-BEGIN
-	DECLARE @IdTipo int = (SELECT tipo_local_id FROM QUERY_SQUAD.Tipo_Local where tipo_local_tipo = @localTipo)
-	RETURN @IdTipo
-END
-
-
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Categoria_Local
-AS
-   INSERT INTO QUERY_SQUAD.Migracion_Categoria_Local (categoria_local_tipo, categoria_local_categoria)
-    SELECT DISTINCT QUERY_SQUAD.GetLocalTipo(LOCAL_TIPO), NULL -- Hay que ver que hacer con las categorias
-    FROM gd_esquema.Maestra
-    WHERE HORARIO_LOCAL_DIA IS NOT NULL
-GO
-*/
--- Ver si hay que hacer el procedure o no por ser datos nuevos
-
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Local
 AS
 INSERT INTO QUERY_SQUAD.Local
-    (local_tipo, local_categoria, local_localidad, local_nombre, local_descripcion, local_direccion, local_provincia)
+    (local_tipo, local_localidad, local_nombre, local_descripcion, local_direccion, local_provincia)
 SELECT DISTINCT
     tipo.tipo_local_id,
-    2, /*ACA SE DEBE AGREGAR LA TABLA CATEGORIA LOCAL*/
     localid.localidad_id,
     esquema.LOCAL_NOMBRE,
     esquema.LOCAL_DESCRIPCION,

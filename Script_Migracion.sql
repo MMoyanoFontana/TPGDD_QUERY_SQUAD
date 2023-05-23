@@ -178,7 +178,7 @@ SELECT DISTINCT
     esquema.PRODUCTO_LOCAL_PRECIO
 FROM gd_esquema.Maestra esquema
     JOIN QUERY_SQUAD.Local localq ON esquema.LOCAL_NOMBRE = localq.local_nombre
-WHERE localq.local_id IS NOT NULL AND esquema.PRODUCTO_LOCAL_NOMBRE
+WHERE localq.local_id IS NOT NULL AND esquema.PRODUCTO_LOCAL_NOMBRE IS NOT NULL --Aca faltaba alguna condicion booleana despues de local_nombre. Le agregue IS NOT NULL para que funcionara
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor
@@ -192,7 +192,7 @@ SELECT DISTINCT
     esquema.REPARTIDOR_APELLIDO,
     esquema.REPARTIDOR_DNi,
     esquema.REPARTIDOR_TELEFONO,
-    esquema.REPARTIDOR_DIRECCION,
+    esquema.REPARTIDOR_DIRECION,
     esquema.REPARTIDOR_EMAIL,
     esquema.REPARTIDOR_FECHA_NAC
 FROM gd_esquema.Maestra esquema

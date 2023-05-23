@@ -131,16 +131,53 @@ Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Local
 AS
+    INSERT INTO QUERY_SQUAD.Local (local_tipo, local_categoria, local_localidad, local_nombre, local_descripcion, local_direccion, local_provincia)
+    SELECT DISTINCT
+            tipo.tipo_local_id,
+            2, /*ACA SE DEBE AGREGAR LA TABLA CATEGORIA LOCAL*/
+            localid.localidad_id,
+            esquema.LOCAL_NOMBRE,
+            esquema.LOCAL_DESCRIPCION,
+            esquema.LOCAL_DIRECCION,
+            esquema.LOCAL_PROVINCIA
+    FROM gd_esquema.Maestra esquema
+    JOIN QUERY_SQUAD.Tipo_Local tipo ON esquema.LOCAL_TIPO = tipo.tipo_local_tipo
+    JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_localidad
+    
     --Migracion_Local
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local
 AS
+    INSERT INTO QUERY_SQUAD.Producto_Local (producto_local_local_id, producto_local_nombre, producto_local_descripcion, producto_local_precio)
+    SELECT DISTINCT
+            localq.local_id,
+            esquema.PRODUCTO_LOCAL_NOMBRE,
+            esquema.PRODUCTO_LOCAL_DESCRIPCION,
+            esquema.PRODUCTO_LOCAL_PRECIO
+    FROM gd_esquema.Maestra esquema
+    JOIN QUERY_SQUAD.Local localq ON esquema.LOCAL_NOMBRE = localq.local_nombre
+    WHERE localq.local_id IS NOT NULL AND esquema.PRODUCTO_LOCAL_NOMBRE
     --Migracion_Producto_Local
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor
 AS
+    INSERT INTO QUERY_SQUAD.Repartidor (repartidor_localidad_id, repartidor_tipo_movilidad, repartidor_nombre, repartidor_apellido, repartidor_dni,repartidor_telefono, repartidor_direccion, repartidor_email, repartidor_fecha_nac)
+    SELECT DISTINCT
+            localid.localidad_id,
+            movi.tipo_movilidad_id,
+            esquema.REPARTIDOR_NOMBRE,
+            esquema.REPARTIDOR_APELLIDO,
+            esquema.REPARTIDOR_DNi,
+            esquema.REPARTIDOR_TELEFONO,
+            esquema.REPARTIDOR_DIRECCION,
+            esquema.REPARTIDOR_EMAIL,
+            esquema.REPARTIDOR_FECHA_NAC
+    FROM gd_esquema.Maestra esquema
+    JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_localidad
+    JOIN QUERY_SQUAD.Tipo_Movilidad movi ON esquema.REPARTIDOR_TIPO_MOVILIDAD = movi.tipo_movilidad_descripcion
+    WHERE localid.localidad_id IS NOT NULL AND movi.tipo_movilidad_id IS NOT NULL AND esquema.REPARTIDOR_DNi IS NOT NULL
     --Migracion_Repartidor
 Go
 

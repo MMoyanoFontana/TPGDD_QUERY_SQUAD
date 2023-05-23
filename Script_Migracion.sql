@@ -207,11 +207,24 @@ Go
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Direccion_Usuario
 AS
     --Migracion_Direccion_Usuario
+	INSERT INTO QUERY_SQUAD.Direccion_Usuario (direccion_usuario_usuario_id, direccion_usuario_direccion, direccion_usuario_localidad_id,direccion_usuario_nombre, direccion_usuario_provincia)
+	SELECT DISTINCT u.usuario_id, m.DIRECCION_USUARIO_DIRECCION, loc.localidad_id, m.DIRECCION_USUARIO_NOMBRE, m.DIRECCION_USUARIO_PROVINCIA
+	FROM gd_esquema.Maestra m
+	JOIN QUERY_SQUAD.Usuario u on (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
+	JOIN QUERY_SQUAD.Localidad loc on (m.DIRECCION_USUARIO_LOCALIDAD = loc.localidad_localidad)
+	Where DIRECCION_USUARIO_DIRECCION is not null
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Medio_De_Pago
 AS
     --Migracion_Medio_De_Pago
+	INSERT INTO QUERY_SQUAD.Medio_De_Pago(medio_de_pago_usuario_id, medio_de_pago_datos_tarjeta, medio_de_pago_tipo)
+	SELECT DISTINCT u.usuario_id,datos.datos_tarjeta_id,tipo.tipo_medio_de_pago
+	FROM gd_esquema.Maestra m
+	JOIN QUERY_SQUAD.Usuario u on (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
+	JOIN QUERY_SQUAD.Datos_Tarjeta datos on (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA and datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
+	JOIN QUERY_SQUAD.Tipo_Medio_De_Pago tipo on (tipo.tipo_medio_de_pago_descripcion = m.MEDIO_PAGO_TIPO)
+	Where m.MEDIO_PAGO_TIPO is not null
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido

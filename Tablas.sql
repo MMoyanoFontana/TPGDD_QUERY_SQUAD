@@ -151,7 +151,7 @@ CREATE TABLE QUERY_SQUAD.Repartidor(
 GO
 
 CREATE TABLE QUERY_SQUAD.Direccion_Usuario(
-    direccion_usuario_id int PRIMARY KEY,
+    direccion_usuario_id int PRIMARY KEY IDENTITY,
     direccion_usuario_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
     direccion_usuario_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
     direccion_usuario_nombre nvarchar(50),
@@ -161,7 +161,7 @@ CREATE TABLE QUERY_SQUAD.Direccion_Usuario(
 GO
 
 CREATE TABLE QUERY_SQUAD.Medio_De_Pago(
-    medio_de_pago_id int PRIMARY KEY,
+    medio_de_pago_id int PRIMARY KEY IDENTITY,
     medio_de_pago_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
     medio_de_pago_datos_tarjeta int FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta,
     medio_de_pago_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,

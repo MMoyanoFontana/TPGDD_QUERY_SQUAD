@@ -57,16 +57,28 @@ Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Localidad
 AS
+    INSERT INTO QUERY_SQUAD.Localidad (localidad_localidad)
+    SELECT DISTINCT LOCAL_LOCALIDAD
+    FROM gd_esquema.Maestra
+    WHERE LOCAL_LOCALIDAD IS NOT NULL
     --Migracion_Localidad
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria
 AS
+    INSERT INTO QUERY_SQUAD.Estado_Envio_Mensajeria (estado_envio_mensajeria_descripcion)
+    SELECT DISTINCT ENVIO_MENSAJERIA_ESTADO
+    FROM gd_esquema.Maestra
+    WHERE ENVIO_MENSAJERIA_ESTADO IS NOT NULL
     --Migracion_Estado_Envio_Mensajeria
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo
 AS
+    INSERT INTO QUERY_SQUAD.Tipo_Reclamo (tipo_reclamo_descripcion)
+    SELECT DISTINCT RECLAMO_DESCRIPCION
+    FROM gd_esquema.Maestra
+    WHERE RECLAMO_DESCRIPCION IS NOT NULL
     --Migracion_Tipo_Reclamo
 Go
  

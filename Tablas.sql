@@ -50,19 +50,19 @@ CREATE TABLE QUERY_SQUAD.Tipo_Medio_De_Pago(
 GO
 
 CREATE TABLE QUERY_SQUAD.Localidad(
-    localidad_id int PRIMARY KEY,
+    localidad_id int PRIMARY KEY IDENTITY,
     localidad_localidad nvarchar(255) 
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Estado_Envio_Mensajeria(
-    estado_envio_mensajeria_id int PRIMARY KEY,
+    estado_envio_mensajeria_id int PRIMARY KEY IDENTITY,
     estado_envio_mensajeria_descripcion nvarchar(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Reclamo(
-    tipo_reclamo_id int PRIMARY KEY,
+    tipo_reclamo_id int PRIMARY KEY IDENTITY,
     tipo_reclamo_descripcion nvarchar(50)
 )
 GO

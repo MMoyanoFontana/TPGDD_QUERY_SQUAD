@@ -118,7 +118,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Local(
     local_id int PRIMARY KEY IDENTITY,
     local_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
-    local_categoria int FOREIGN KEY REFERENCES QUERY_SQUAD.Categoria_Local NOT NULL,
+    local_categoria int FOREIGN KEY REFERENCES QUERY_SQUAD.Categoria_Local,
     local_localidad int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
     local_nombre nvarchar(100),
     local_descripcion nvarchar(255),
@@ -128,7 +128,7 @@ CREATE TABLE QUERY_SQUAD.Local(
 GO
 
 CREATE TABLE QUERY_SQUAD.Producto_Local(
-    producto_local_codigo nvarchar(50) PRIMARY KEY IDENTITY,
+    producto_local_codigo nvarchar(50) PRIMARY KEY,
     producto_local_local_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
     producto_local_nombre nvarchar(50),
     producto_local_descripcion nvarchar(255),
@@ -163,7 +163,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Medio_De_Pago(
     medio_de_pago_id int PRIMARY KEY,
     medio_de_pago_usuario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
-    medio_de_pago_datos_tarjeta int FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta NOT NULL,
+    medio_de_pago_datos_tarjeta int FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta,
     medio_de_pago_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,
 )
 GO

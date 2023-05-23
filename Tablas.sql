@@ -116,7 +116,7 @@ CREATE TABLE QUERY_SQUAD.Categoria_Local(
 GO
 
 CREATE TABLE QUERY_SQUAD.Local(
-    local_id int PRIMARY KEY,
+    local_id int PRIMARY KEY IDENTITY,
     local_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
     local_categoria int FOREIGN KEY REFERENCES QUERY_SQUAD.Categoria_Local NOT NULL,
     local_localidad int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE QUERY_SQUAD.Local(
 GO
 
 CREATE TABLE QUERY_SQUAD.Producto_Local(
-    producto_local_codigo nvarchar(50) PRIMARY KEY,
+    producto_local_codigo nvarchar(50) PRIMARY KEY IDENTITY,
     producto_local_local_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
     producto_local_nombre nvarchar(50),
     producto_local_descripcion nvarchar(255),
@@ -137,7 +137,7 @@ CREATE TABLE QUERY_SQUAD.Producto_Local(
 GO
 
 CREATE TABLE QUERY_SQUAD.Repartidor(
-    repartidor_id int PRIMARY KEY,
+    repartidor_id int PRIMARY KEY IDENTITY,
     repartidor_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
     repartidor_tipo_movilidad int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Movilidad NOT NULL,
     repartidor_nombre nvarchar(255),

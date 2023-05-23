@@ -92,13 +92,13 @@ CREATE TABLE QUERY_SQUAD.Tipo_Local(
 GO
 
 CREATE TABLE QUERY_SQUAD.Dia(
-    dia_id int PRIMARY KEY,
+    dia_id int PRIMARY KEY IDENTITY,
     dia_nombre nvarchar(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Paquete(
-    paquete_id int PRIMARY KEY,
+    paquete_id int PRIMARY KEY IDENTITY,
     paquete_tipo nvarchar(50),
     paquete_alto_max decimal(18,2),
     paquete_ancho_max decimal(18,2),
@@ -109,7 +109,7 @@ CREATE TABLE QUERY_SQUAD.Paquete(
 GO
 
 CREATE TABLE QUERY_SQUAD.Categoria_Local(
-    categoria_local_id int PRIMARY KEY,
+    categoria_local_id int PRIMARY KEY IDENTITY,
     categoria_local_tipo int FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
     categoria_local_categoria nvarchar(50),
 )

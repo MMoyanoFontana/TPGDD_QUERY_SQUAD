@@ -31,20 +31,20 @@ CREATE TABLE QUERY_SQUAD.Usuario (
 GO
 
 CREATE TABLE QUERY_SQUAD.Datos_Tarjeta(
-    datos_tarjeta_id int PRIMARY KEY,
+    datos_tarjeta_id int PRIMARY KEY IDENTITY,
     medio_de_pago_marca_tarjeta nvarchar(100),
     medio_de_pago_tarjeta nvarchar(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Movilidad(
-    tipo_movilidad_id int PRIMARY KEY,
+    tipo_movilidad_id int PRIMARY KEY IDENTITY,
     tipo_movilidad_descripcion nvarchar(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Medio_De_Pago(
-    tipo_medio_de_pago int PRIMARY KEY,
+    tipo_medio_de_pago int PRIMARY KEY IDENTITY,
     tipo_medio_de_pago_descripcion nvarchar(50)
 )
 GO

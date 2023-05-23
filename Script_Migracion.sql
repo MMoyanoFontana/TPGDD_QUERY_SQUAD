@@ -30,16 +30,28 @@ Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta
 AS
+    INSERT INTO QUERY_SQUAD.Datos_Tarjeta (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta)
+    SELECT DISTINCT MARCA_TARJETA, MEDIO_PAGO_NRO_TARJETA
+    FROM gd_esquema.Maestra
+    WHERE MARCA_TARJETA IS NOT NULL AND MEDIO_PAGO_NRO_TARJETA IS NOT NULL
     --Migracion_Datos_Tarjeta
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Movilidad
 AS
+    INSERT INTO QUERY_SQUAD.Tipo_Movilidad (tipo_movilidad_descripcion)
+    SELECT DISTINCT REPARTIDOR_TIPO_MOVILIDAD
+    FROM gd_esquema.Maestra
+    WHERE REPARTIDOR_TIPO_MOVILIDAD IS NOT NULL
     --Migracion_Tipo_Movilidad
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago
 AS
+    INSERT INTO QUERY_SQUAD.Tipo_Medio_De_Pago (tipo_medio_de_pago_descripcion)
+    SELECT DISTINCT MEDIO_PAGO_TIPO
+    FROM gd_esquema.Maestra
+    WHERE MEDIO_PAGO_TIPO IS NOT NULL
     --Migracion_Tipo_Medio_De_Pago
 Go
 

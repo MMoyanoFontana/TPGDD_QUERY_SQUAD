@@ -68,14 +68,15 @@ CREATE TABLE QUERY_SQUAD.Tipo_Reclamo(
 GO
 
 CREATE TABLE QUERY_SQUAD.Estado_Reclamo(
-    estado_reclamo_id int PRIMARY KEY,
+    estado_reclamo_id int PRIMARY KEY IDENTITY,
     estado_reclamo_descripcion nvarchar(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Operador_Reclamo(
-    operador_reclamo_id int PRIMARY KEY,
+    operador_reclamo_id int PRIMARY KEY IDENTITY,
     operador_reclamo_nombre nvarchar(255),
+	operador_reclamo_apellido nvarchar(255),
     operador_reclamo_dni decimal(18,0),
     operador_reclamo_telefono decimal(18,0),
     operador_reclamo_direccion nvarchar(255),
@@ -85,7 +86,7 @@ CREATE TABLE QUERY_SQUAD.Operador_Reclamo(
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Local(
-    tipo_local_id int PRIMARY KEY,
+    tipo_local_id int PRIMARY KEY IDENTITY,
     tipo_local_tipo nvarchar(50)
 )
 GO

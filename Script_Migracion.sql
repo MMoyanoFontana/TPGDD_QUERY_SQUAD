@@ -82,19 +82,36 @@ AS
     --Migracion_Tipo_Reclamo
 Go
  
+
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Reclamo
 AS
     --Migracion_Estado_Reclamo
+	INSERT INTO QUERY_SQUAD.Estado_Reclamo (estado_reclamo_descripcion)
+    SELECT DISTINCT RECLAMO_ESTADO
+    FROM gd_esquema.Maestra
+    WHERE RECLAMO_ESTADO IS NOT NULL
+
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Operador_Reclamo
 AS
     --Migracion_Operador_Reclamo
+	INSERT INTO QUERY_SQUAD.Operador_Reclamo(operador_reclamo_nombre, operador_reclamo_apellido, operador_reclamo_dni, operador_reclamo_telefono, 
+											 operador_reclamo_direccion, operador_reclamo_mail, operador_reclamo_fecha_nac)
+	SELECT DISTINCT OPERADOR_RECLAMO_NOMBRE, OPERADOR_RECLAMO_APELLIDO, OPERADOR_RECLAMO_DNI, OPERADOR_RECLAMO_TELEFONO, 
+					 OPERADOR_RECLAMO_DIRECCION, OPERADOR_RECLAMO_MAIL, OPERADOR_RECLAMO_FECHA_NAC
+	FROM gd_esquema.Maestra
+	WHERE OPERADOR_RECLAMO_DNI is not null
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Local
 AS
     --Migracion_Tipo_Local
+	INSERT INTO QUERY_SQUAD.Tipo_Local (tipo_local_tipo)
+	SELECT DISTINCT LOCAL_TIPO
+	FROM gd_esquema.Maestra
+	WHERE LOCAL_TIPO is not null
+
 Go
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Dia

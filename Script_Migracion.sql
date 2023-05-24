@@ -156,7 +156,34 @@ SELECT DISTINCT
     esquema.PRODUCTO_LOCAL_PRECIO
 FROM gd_esquema.Maestra esquema
     JOIN QUERY_SQUAD.Local localq ON esquema.LOCAL_NOMBRE = localq.local_nombre
-WHERE localq.local_id IS NOT NULL AND esquema.PRODUCTO_LOCAL_NOMBRE IS NOT NULL --Aca faltaba alguna condicion booleana despues de local_nombre. Le agregue IS NOT NULL para que funcionara
+WHERE esquema.PRODUCTO_LOCAL_NOMBRE IS NOT NULL
+GO
+
+CREATE FUNCTION QUERY_SQUAD.Obtener_Ultima_Localidad (@REPARTIDOR_NOMBRE VARCHAR(255),@REPARTIDOR_APELLIDO VARCHAR(255),@REPARTIDOR_DNI DECIMAL(18,0))
+RETURNS NVARCHAR(255)
+AS BEGIN
+	DECLARE @MAX_FECHA_ENVIO_MENSAJERIA datetime
+	DECLARE @MAX_LOCALIDAD_ENVIO_MENSAJERIA NVARCHAR(255)
+	DECLARE @MAX_FECHA_PEDIDO datetime
+	DECLARE @MAX_LOCALIDAD_PEDIDO NVARCHAR(255)
+    
+	SELECT @MAX_FECHA_ENVIO_MENSAJERIA = MAX(ENVIO_MENSAJERIA_FECHA),@MAX_FECHA_PEDIDO = MAX(PEDIDO_FECHA)
+	FROM gd_esquema.Maestra
+	WHERE REPARTIDOR_NOMBRE= @REPARTIDOR_NOMBRE AND REPARTIDOR_APELLIDO = @REPARTIDOR_APELLIDO AND REPARTIDOR_DNI = @REPARTIDOR_DNI
+
+	IF @MAX_FECHA_ENVIO_MENSAJERIA<@MAX_FECHA_PEDIDO
+	BEGIN
+		SELECT TOP(1) @MAX_LOCALIDAD_ENVIO_MENSAJERIA = ENVIO_MENSAJERIA_LOCALIDAD
+		FROM gd_esquema.Maestra
+		WHERE REPARTIDOR_NOMBRE= @REPARTIDOR_NOMBRE AND REPARTIDOR_APELLIDO = @REPARTIDOR_APELLIDO AND REPARTIDOR_DNI = @REPARTIDOR_DNI AND ENVIO_MENSAJERIA_FECHA= @MAX_FECHA_ENVIO_MENSAJERIA
+		RETURN @MAX_LOCALIDAD_ENVIO_MENSAJERIA
+	END
+	SELECT TOP(1) @MAX_LOCALIDAD_PEDIDO = LOCAL_LOCALIDAD
+	FROM gd_esquema.Maestra
+	WHERE REPARTIDOR_NOMBRE= @REPARTIDOR_NOMBRE AND REPARTIDOR_APELLIDO = @REPARTIDOR_APELLIDO AND REPARTIDOR_DNI = @REPARTIDOR_DNI AND PEDIDO_FECHA=@MAX_FECHA_PEDIDO
+
+	RETURN @MAX_LOCALIDAD_PEDIDO
+END
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Repartidor
@@ -164,7 +191,7 @@ AS
 INSERT INTO QUERY_SQUAD.Repartidor
     (repartidor_localidad_id, repartidor_tipo_movilidad, repartidor_nombre, repartidor_apellido, repartidor_dni,repartidor_telefono, repartidor_direccion, repartidor_email, repartidor_fecha_nac)
 SELECT DISTINCT
-    localid.localidad_id,
+	QUERY_SQUAD.Obtener_Ultima_Localidad(esquema.REPARTIDOR_NOMBRE,esquema.REPARTIDOR_APELLIDO,esquema.REPARTIDOR_DNI),
     movi.tipo_movilidad_id,
     esquema.REPARTIDOR_NOMBRE,
     esquema.REPARTIDOR_APELLIDO,
@@ -174,9 +201,9 @@ SELECT DISTINCT
     esquema.REPARTIDOR_EMAIL,
     esquema.REPARTIDOR_FECHA_NAC
 FROM gd_esquema.Maestra esquema
-    JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_localidad
+    --JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_localidad
     JOIN QUERY_SQUAD.Tipo_Movilidad movi ON esquema.REPARTIDOR_TIPO_MOVILIDAD = movi.tipo_movilidad_descripcion
-WHERE localid.localidad_id IS NOT NULL AND movi.tipo_movilidad_id IS NOT NULL AND esquema.REPARTIDOR_DNi IS NOT NULL
+WHERE esquema.REPARTIDOR_DNi IS NOT NULL
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Direccion_Usuario
@@ -199,12 +226,31 @@ FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
     JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA and datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
     JOIN QUERY_SQUAD.Tipo_Medio_De_Pago tipo ON (tipo.tipo_medio_de_pago_descripcion = m.MEDIO_PAGO_TIPO)
-Where m.MEDIO_PAGO_TIPO IS NOT NULL
+Where m.PEDIDO_NRO IS NOT NULL
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido
 AS
     --Migracion_Pedido
+	INSERT INTO QUERY_SQUAD.PEDIDO (pedido_nro, pedido_usuario_id, pedido_local_id, pedido_direccion_usuario_id, pedido_medio_pago_id, 
+	 pedido_repartidor_id, pedido_estado_pedido_id, pedido_precio_envio, pedido_total_productos, pedido_tarifa_servicio,
+	 pedido_propina, pedido_total_cupones, pedido_total_servicio, pedido_observ, pedido_fecha,
+	 pedido_fecha_entrega, pedido_tiempo_estimado, pedido_calificacion)
+	SELECT DISTINCT m.PEDIDO_NRO,u.usuario_id,l.local_id, d.direccion_usuario_id, mp.medio_de_pago_id, r.repartidor_id,
+                    ep.estado_pedido_id, m.PEDIDO_PRECIO_ENVIO, m.PEDIDO_TOTAL_PRODUCTOS, m.PEDIDO_TARIFA_SERVICIO,
+                    m.PEDIDO_PROPINA, m.PEDIDO_TOTAL_CUPONES, m.PEDIDO_TOTAL_SERVICIO, m.PEDIDO_OBSERV, m.PEDIDO_FECHA,
+                    m.PEDIDO_FECHA_ENTREGA, m.PEDIDO_TIEMPO_ESTIMADO_ENTREGA, m.PEDIDO_CALIFICACION
+	FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
+	JOIN QUERY_SQUAD.Direccion_Usuario d ON (d.direccion_usuario_usuario_id = u.usuario_id AND d.direccion_usuario_nombre = m.DIRECCION_USUARIO_NOMBRE)
+    JOIN QUERY_SQUAD.Repartidor r ON (m.REPARTIDOR_DNI = r.repartidor_dni)
+    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA and datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
+	JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta AND mp.medio_de_pago_usuario_id = u.usuario_id)
+	JOIN QUERY_SQUAD.Local l ON (l.local_nombre = m.LOCAL_NOMBRE)
+    JOIN QUERY_SQUAD.Estado_Pedido ep on (ep.estado_pedido_descripcion = m.PEDIDO_ESTADO)
+	WHERE PEDIDO_NRO is not null
+	order by PEDIDO_NRO
+	
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Productos
@@ -214,35 +260,101 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon
 AS
+    INSERT INTO QUERY_SQUAD.Cupon (cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento)
+    SELECT DISTINCT 
+            t.tipo_cupon_id,
+            m.CUPON_MONTO,
+            m.CUPON_FECHA_ALTA,
+            m.CUPON_FECHA_VENCIMIENTO
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion) 
+    WHERE t.tipo_cupon_id IS NOT NULL
     --Migracion_Cupon
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon
 AS
-    --Migracion_Usuario_Cupon
+    INSERT INTO QUERY_SQUAD.Usuario_Cupon (usuario_cupon_cupon_nro, usuario_cupon_usuario_id)
+    SELECT DISTINCT c.cupon_nro, u.usuario_id
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.usuario_apellido = m.USUARIO_APELLIDO)
+    WHERE CUPON_NRO is not null
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo
 AS
+    INSERT INTO QUERY_SQUAD.Reclamo
+    SELECT DISTINCT m.RECLAMO_NRO, u.usuario_id, m.pedido_nro, o.operador_reclamo_id, 
+                    tr.tipo_reclamo_id, er.estado_reclamo_id, m.RECLAMO_FECHA, m.RECLAMO_DESCRIPCION,
+                    m.RECLAMO_FECHA_SOLUCION, m.RECLAMO_SOLUCION, m.RECLAMO_CALIFICACION
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
+    JOIN QUERY_SQUAD.Operador_Reclamo o ON(o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI AND o.operador_reclamo_apellido = m.OPERADOR_RECLAMO_APELLIDO AND o.operador_reclamo_nombre = m.OPERADOR_RECLAMO_NOMBRE)  
+    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_DESCRIPCION)
+    JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
+    WHERE RECLAMO_NRO is not null
     --Migracion_Reclamo
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon_Reclamo
 AS
-    --Migracion_Cupon_Reclamo
+    INSERT INTO QUERY_SQUAD.Cupon_Reclamo (cupon_reclamo_reclamo_id, cupon_reclamo_cupon_nro)
+    SELECT DISTINCT r.reclamo_nro, c.cupon_nro
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Reclamo r ON (m.RECLAMO_NRO = r.reclamo_nro)
+    JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_RECLAMO_NRO = c.cupon_nro)
+    WHERE RECLAMO_NRO is not null AND CUPON_RECLAMO_NRO is not null
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Horario_Local
 AS
-    --Migracion_Horario_Local
+    INSERT INTO QUERY_SQUAD.Horario_Local (horario_local_id_local, horario_local_dia, horario_local_hora_apertura, horario_local_hora_cierre)
+    SELECT DISTINCT
+    l.local_id,
+    d.dia_id,
+    m.HORARIO_LOCAL_HORA_APERTURA,
+    m.HORARIO_LOCAL_HORA_CIERRE    
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Local l ON (m.LOCAL_NOMBRE = l.local_nombre)
+    JOIN QUERY_SQUAD.Dia d ON (m.HORARIO_LOCAL_DIA = d.dia_nombre)
+    
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Envio_Mensajeria
 AS
-    --Migracion_Envio_Mensajeria
+    INSERT INTO QUERY_SQUAD.Envio_Mensajeria (envio_mensajeria_nro, envio_mensajeria_usuario_id, envio_mensajeria_medio_de_pago_id, 
+    envio_mensajeria_repartidor_id, envio_mensajeria_localidad_id, envio_mensajeria_paquete_id, envio_mensajeria_estado, envio_mensajeria_dir_orig,
+    envio_mensajeria_dir_dest, envio_mensajeria_provincia, envio_mensajeria_km, envio_mensajeria_valor_asegurado, envio_mensajeria_precio_envio, 
+    envio_mensajeria_precio_seguro, envio_mensajeria_propina, envio_mensajeria_total, envio_mensajeria_observ, envio_mensajeria_fecha, 
+    envio_mensajeria_fecha_entrega, envio_mensajeria_tiempo_estimado, envio_mensajeria_calificacion)
+    SELECT DISTINCT m.ENVIO_MENSAJERIA_NRO, u.usuario_id, mp.medio_de_pago_id, r.repartidor_id, l.localidad_id, p.paquete_id, estado.estado_envio_mensajeria_id,
+                    m.ENVIO_MENSAJERIA_DIR_ORIG, m.ENVIO_MENSAJERIA_DIR_DEST, m.ENVIO_MENSAJERIA_PROVINCIA,
+                    m.ENVIO_MENSAJERIA_KM, m.ENVIO_MENSAJERIA_VALOR_ASEGURADO, m.ENVIO_MENSAJERIA_PRECIO_ENVIO,
+                    m.ENVIO_MENSAJERIA_PRECIO_SEGURO,  m.ENVIO_MENSAJERIA_PROPINA, m.ENVIO_MENSAJERIA_TOTAL, m.ENVIO_MENSAJERIA_OBSERV,
+                    m.ENVIO_MENSAJERIA_FECHA, m.ENVIO_MENSAJERIA_FECHA_ENTREGA, m.ENVIO_MENSAJERIA_TIEMPO_ESTIMADO, m.ENVIO_MENSAJERIA_CALIFICACION 
+    
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI AND u.usuario_nombre = m.USUARIO_NOMBRE AND u.USUARIO_APELLIDO = m.USUARIO_APELLIDO)
+    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA AND datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
+    JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta AND mp.medio_de_pago_usuario_id = u.usuario_id)
+    JOIN QUERY_SQUAD.Repartidor r ON (m.REPARTIDOR_DNI = r.repartidor_dni)
+    JOIN QUERY_SQUAD.Localidad l ON (m.ENVIO_MENSAJERIA_LOCALIDAD = l.localidad_localidad)
+    JOIN QUERY_SQUAD.Paquete p ON (m.PAQUETE_TIPO = p.paquete_tipo)
+    JOIN QUERY_SQUAD.Estado_Envio_Mensajeria estado ON (m.ENVIO_MENSAJERIA_ESTADO = estado.envio_mensajeria_estado)
+    
+
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Cupones
 AS
+    INSERT INTO QUERY_SQUAD.Pedido_Cupones (pedido_cupones_cupon_id, pedido_cupones_pedido)
+    SELECT DISTINCT
+    c.cupon_nro,
+    p.pedido_nro
+    FROM gd_esquema.Maestra m
+    JOIN QUERY_SQUAD.pedido p ON (m.PEDIDO_NRO = p.pedido_nro)
+    JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
     --Migracion_Pedido_Cupones
 GO
+

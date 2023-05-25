@@ -262,7 +262,7 @@ GO
 
 CREATE TABLE QUERY_SQUAD.Horario_Local
 (
-    horario_local_id INT PRIMARY KEY,
+    horario_local_id INT PRIMARY KEY IDENTITY,
     horario_local_id_local INT FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
     horario_local_dia INT FOREIGN KEY REFERENCES QUERY_SQUAD.Dia NOT NULL,
     horario_local_hora_apertura DECIMAL(18,0),
@@ -302,21 +302,3 @@ CREATE TABLE QUERY_SQUAD.Pedido_Cupones
     pedido_cupones_pedido DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL
 )
 GO
-
-CREATE INDEX idx_usuario_dni_nombre_apellido
-ON QUERY_SQUAD.Usuario (usuario_dni, usuario_nombre, USUARIO_APELLIDO);
-
-CREATE INDEX idx_local_nombre
-ON QUERY_SQUAD.Local (local_nombre);
-
-CREATE INDEX idx_direccion_usuario_usuario_id_nombre
-ON QUERY_SQUAD.Direccion_Usuario (direccion_usuario_usuario_id, direccion_usuario_nombre);
-
-CREATE INDEX idx_repartidor_dni
-ON QUERY_SQUAD.Repartidor (repartidor_dni);
-
-CREATE INDEX idx_medio_de_pago_marca_tarjeta_tarjeta
-ON QUERY_SQUAD.Datos_Tarjeta (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta);
-
-CREATE INDEX idx_medio_de_pago_datos_tarjeta_usuario_id
-ON QUERY_SQUAD.Medio_De_Pago (medio_de_pago_datos_tarjeta, medio_de_pago_usuario_id);

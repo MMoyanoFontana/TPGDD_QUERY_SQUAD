@@ -34,9 +34,6 @@ GO
 DROP TABLE QUERY_SQUAD.Direccion_Usuario
 GO
 
-DROP FUNCTION QUERY_SQUAD.Obtener_Ultima_Localidad
-GO
-
 DROP TABLE QUERY_SQUAD.Repartidor
 GO
 

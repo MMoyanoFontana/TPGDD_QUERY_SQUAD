@@ -148,9 +148,10 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local
 AS
 INSERT INTO QUERY_SQUAD.Producto_Local
-    (producto_local_local_id, producto_local_nombre, producto_local_descripcion, producto_local_precio)
+    (producto_local_local_id, producto_local_codigo ,producto_local_nombre, producto_local_descripcion, producto_local_precio)
 SELECT DISTINCT
     localq.local_id,
+	esquema.PRODUCTO_LOCAL_CODIGO,
     esquema.PRODUCTO_LOCAL_NOMBRE,
     esquema.PRODUCTO_LOCAL_DESCRIPCION,
     esquema.PRODUCTO_LOCAL_PRECIO
@@ -268,7 +269,11 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Productos
 AS
-    --Migracion_Pedido_Productos
+	INSERT INTO QUERY_SQUAD.Pedido_Productos (pedido_productos_local_id, pedido_productos_producto_local_codigo, pedido_productos_pedido_id, producto_cantidad, producto_precio)
+    SELECT l.local_id, m.PRODUCTO_LOCAL_CODIGO, m.PEDIDO_NRO, m.PRODUCTO_CANTIDAD, m.PRODUCTO_LOCAL_PRECIO FROM gd_esquema.Maestra m
+	JOIN QUERY_SQUAD.Local l ON (m.LOCAL_NOMBRE = l.local_nombre)
+	WHERE PEDIDO_NRO is not null AND PRODUCTO_LOCAL_CODIGO is not null
+	
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon
@@ -283,6 +288,20 @@ AS
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion) 
     WHERE t.tipo_cupon_id IS NOT NULL
+
+    INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento) --INSERTA LOS CUPONES RECLAMO QUE NO ESTAN CARGADOS COMO CUPON (98212298 y 40124215)
+    SELECT DISTINCT 
+			m.CUPON_RECLAMO_NRO,
+			t.tipo_cupon_id,
+            m.CUPON_RECLAMO_MONTO,
+            m.CUPON_RECLAMO_FECHA_ALTA,
+            m.CUPON_RECLAMO_FECHA_VENCIMIENTO
+	FROM gd_esquema.Maestra m
+	JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_RECLAMO_TIPO = t.tipo_cupon_descripcion)
+	WHERE NOT EXISTS (
+    SELECT *
+    FROM QUERY_SQUAD.Cupon
+    WHERE m.CUPON_RECLAMO_NRO is not null AND m.CUPON_RECLAMO_NRO = cupon_nro);
     --Migracion_Cupon
 GO
 
@@ -313,7 +332,7 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon_Reclamo
 AS
-    INSERT INTO QUERY_SQUAD.Cupon_Reclamo (cupon_reclamo_reclamo_id, cupon_reclamo_cupon_nro)
+	INSERT INTO QUERY_SQUAD.Cupon_Reclamo (cupon_reclamo_reclamo_id, cupon_reclamo_cupon_nro)
     SELECT DISTINCT r.reclamo_nro, c.cupon_nro
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Reclamo r ON (m.RECLAMO_NRO = r.reclamo_nro)
@@ -371,4 +390,3 @@ AS
     JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
     --Migracion_Pedido_Cupones
 GO
-

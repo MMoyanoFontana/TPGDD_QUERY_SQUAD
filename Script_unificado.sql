@@ -699,7 +699,7 @@ FETCH NEXT FROM cursor_repartidor INTO @Repartidor_DNI, @Repartidor_Nombre, @Rep
 WHILE @@FETCH_STATUS = 0  
     BEGIN
 		SET @Tipo_Movilidad_ID = (SELECT t.tipo_movilidad_id FROM QUERY_SQUAD.Tipo_Movilidad t WHERE t.tipo_movilidad_descripcion = @REPARTIDOR_TIPO_MOVILIDAD)
-		IF (@PEDIDO_FECHA_ENTREGA >= @ENVIO_MENSAJERIA_FECHA_ENTREGA)
+		IF (@PEDIDO_FECHA_ENTREGA <= @ENVIO_MENSAJERIA_FECHA_ENTREGA)
 			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_localidad = @LOCAL_LOCALIDAD)
 		ELSE
 			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_localidad = @ENVIO_MENSAJERIA_LOCALIDAD)

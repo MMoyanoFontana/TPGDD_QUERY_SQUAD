@@ -282,7 +282,7 @@ AS
             m.CUPON_FECHA_VENCIMIENTO
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion) 
-    WHERE t.tipo_cupon_id IS NOT NULL
+    WHERE m.CUPON_NRO IS NOT NULL
 
     INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento) --INSERTA LOS CUPONES RECLAMO QUE NO ESTAN CARGADOS COMO CUPON (98212298 y 40124215)
     SELECT DISTINCT 
@@ -300,14 +300,15 @@ AS
     --Migracion_Cupon
 GO
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon --MIGRA TANTO LOS CUPONES Usados en pedidos, como los cupones dado por reclamo
 AS
-    INSERT INTO QUERY_SQUAD.Usuario_Cupon (usuario_cupon_cupon_nro, usuario_cupon_usuario_id)
-    SELECT DISTINCT c.cupon_nro, u.usuario_id
-    FROM gd_esquema.Maestra m
-    JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
-    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-    WHERE m.CUPON_NRO is not null
+	INSERT INTO QUERY_SQUAD.Usuario_Cupon (usuario_cupon_cupon_nro, usuario_cupon_usuario_id)
+    SELECT t1.cupon_nro, u.usuario_id
+    FROM  
+	(SELECT USUARIO_DNI, CUPON_NRO from gd_esquema.Maestra where CUPON_NRO is not null
+	UNION
+	SELECT USUARIO_DNI,CUPON_RECLAMO_NRO from gd_esquema.Maestra where CUPON_RECLAMO_NRO is not null) t1
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = t1.USUARIO_DNI)	
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo
@@ -319,7 +320,7 @@ AS
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
     JOIN QUERY_SQUAD.Operador_Reclamo o ON(o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI AND o.operador_reclamo_apellido = m.OPERADOR_RECLAMO_APELLIDO AND o.operador_reclamo_nombre = m.OPERADOR_RECLAMO_NOMBRE)  
-    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_DESCRIPCION)
+    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_TIPO)
     JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
     WHERE RECLAMO_NRO is not null
     --Migracion_Reclamo
@@ -385,3 +386,4 @@ AS
     JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
     --Migracion_Pedido_Cupones
 GO
+

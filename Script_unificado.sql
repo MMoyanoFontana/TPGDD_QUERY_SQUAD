@@ -571,9 +571,9 @@ CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo
 AS
 INSERT INTO QUERY_SQUAD.Tipo_Reclamo
     (tipo_reclamo_descripcion)
-SELECT DISTINCT RECLAMO_DESCRIPCION
+SELECT DISTINCT RECLAMO_TIPO
 FROM gd_esquema.Maestra
-WHERE RECLAMO_DESCRIPCION IS NOT NULL
+WHERE RECLAMO_TIPO IS NOT NULL
 GO
 
 
@@ -781,8 +781,8 @@ AS
             m.CUPON_FECHA_ALTA,
             m.CUPON_FECHA_VENCIMIENTO
     FROM gd_esquema.Maestra m
-    JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion) 
-    WHERE t.tipo_cupon_id IS NOT NULL
+    JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion)  
+    WHERE m.CUPON_NRO IS NOT NULL
 
     INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento) --INSERTA LOS CUPONES RECLAMO QUE NO ESTAN CARGADOS COMO CUPON (98212298 y 40124215)
     SELECT DISTINCT 
@@ -800,14 +800,15 @@ AS
     --Migracion_Cupon
 GO
 
-CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon
+CREATE PROCEDURE QUERY_SQUAD.Migracion_Usuario_Cupon --MIGRA TANTO LOS CUPONES Usados en pedidos, como los cupones dado por reclamo
 AS
-    INSERT INTO QUERY_SQUAD.Usuario_Cupon (usuario_cupon_cupon_nro, usuario_cupon_usuario_id)
-    SELECT DISTINCT c.cupon_nro, u.usuario_id
-    FROM gd_esquema.Maestra m
-    JOIN QUERY_SQUAD.Cupon c ON (m.CUPON_NRO = c.cupon_nro)
-    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-    WHERE m.CUPON_NRO is not null
+	INSERT INTO QUERY_SQUAD.Usuario_Cupon (usuario_cupon_cupon_nro, usuario_cupon_usuario_id)
+    SELECT t1.cupon_nro, u.usuario_id
+    FROM  
+	(SELECT USUARIO_DNI, CUPON_NRO from gd_esquema.Maestra where CUPON_NRO is not null
+	UNION
+	SELECT USUARIO_DNI,CUPON_RECLAMO_NRO from gd_esquema.Maestra where CUPON_RECLAMO_NRO is not null) t1
+    JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = t1.USUARIO_DNI)	
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Reclamo
@@ -819,7 +820,7 @@ AS
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
     JOIN QUERY_SQUAD.Operador_Reclamo o ON(o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI AND o.operador_reclamo_apellido = m.OPERADOR_RECLAMO_APELLIDO AND o.operador_reclamo_nombre = m.OPERADOR_RECLAMO_NOMBRE)  
-    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_DESCRIPCION)
+    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_TIPO)
     JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
     WHERE RECLAMO_NRO is not null
     --Migracion_Reclamo
@@ -887,51 +888,81 @@ AS
 GO
 
 ---------EXEC PROCEDURES ----------------
+PRINT('MIGRANDO TIPOS DE CUPON')
 Exec QUERY_SQUAD.Migracion_Tipo_Cupon
+
+PRINT('MIGRANDO ESTADOS DE PEDIDO')
 Exec QUERY_SQUAD.Migracion_Estado_Pedido
 
+PRINT('MIGRANDO USUARIOS')
 Exec QUERY_SQUAD.Migracion_Usuario
 CREATE INDEX idx_usuario_dni
-ON QUERY_SQUAD.Usuario (usuario_dni);
+ON QUERY_SQUAD.Usuario (usuario_dni)
 GO
 
+PRINT('MIGRANDO DATOS TARJETA')
 Exec QUERY_SQUAD.Migracion_Datos_Tarjeta
 
 CREATE INDEX idx_medio_de_pago_marca_tarjeta_tarjeta
-ON QUERY_SQUAD.Datos_Tarjeta (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta);
+ON QUERY_SQUAD.Datos_Tarjeta (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta)
 
+PRINT('MIGRANDO TIPOS DE MOVILIDAD')
 Exec QUERY_SQUAD.Migracion_Tipo_Movilidad
+PRINT('MIGRANDO TIPOS DE MEDIO DE PAGO')
 Exec QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago
+PRINT('MIGRANDO LOCALIDADES')
 Exec QUERY_SQUAD.Migracion_Localidad
+PRINT('MIGRANDO ESTADOS DE ENVIO DE MENSAJERIA')
 Exec QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria
+PRINT('MIGRANDO TIPOS DE RECLAMO')
 Exec QUERY_SQUAD.Migracion_Tipo_Reclamo
+PRINT('MIGRANDO ESTADOS DE RECLAMO')
 Exec QUERY_SQUAD.Migracion_Estado_Reclamo
+PRINT('MIGRANDO OPERADORES')
 Exec QUERY_SQUAD.Migracion_Operador_Reclamo
+PRINT('MIGRANDO TIPOS DE LOCAL')
 Exec QUERY_SQUAD.Migracion_Tipo_Local
+PRINT('MIGRANDO DIAS')
 Exec QUERY_SQUAD.Migracion_Dia
+PRINT('MIGRANDO PAQUETES')
 Exec QUERY_SQUAD.Migracion_Paquete
+PRINT('MIGRANDO LOCALES')
 Exec QUERY_SQUAD.Migracion_Local
+PRINT('MIGRANDO PRODUCTO LOCAL')
 Exec QUERY_SQUAD.Migracion_Producto_Local
-
+PRINT('MIGRANDO REPARTIDORES')
 Exec QUERY_SQUAD.Migracion_Repartidor
+
 CREATE INDEX idx_repartidor_dni
-ON QUERY_SQUAD.Repartidor (repartidor_dni);
+ON QUERY_SQUAD.Repartidor (repartidor_dni)
 
+PRINT('MIGRANDO DIRECCIONES DE USUARIO')
 Exec QUERY_SQUAD.Migracion_Direccion_Usuario
-CREATE INDEX idx_direccion_usuario_usuario_id_nombre
-ON QUERY_SQUAD.Direccion_Usuario (direccion_usuario_usuario_id, direccion_usuario_nombre);
 
+CREATE INDEX idx_direccion_usuario_usuario_id_nombre
+ON QUERY_SQUAD.Direccion_Usuario (direccion_usuario_usuario_id, direccion_usuario_nombre)
+
+PRINT('MIGRANDO MEDIOS DE PAGO')
 Exec QUERY_SQUAD.Migracion_Medio_De_Pago
 
 CREATE INDEX idx_medio_de_pago_datos_tarjeta_usuario_id
-ON QUERY_SQUAD.Medio_De_Pago (medio_de_pago_datos_tarjeta, medio_de_pago_usuario_id);
+ON QUERY_SQUAD.Medio_De_Pago (medio_de_pago_datos_tarjeta, medio_de_pago_usuario_id)
 
+PRINT('MIGRANDO PEDIDOS')
 Exec QUERY_SQUAD.Migracion_Pedido
+PRINT('MIGRANDO PRODUCTOS POR PEDIDO')
 Exec QUERY_SQUAD.Migracion_Pedido_Productos
+PRINT('MIGRANDO CUPONES')
 Exec QUERY_SQUAD.Migracion_Cupon
+PRINT('MIGRANDO USUARIO_CUPONES')
 Exec QUERY_SQUAD.Migracion_Usuario_Cupon
+PRINT('MIGRANDO RECLAMOS')
 Exec QUERY_SQUAD.Migracion_Reclamo
+PRINT('MIGRANDO CUPONES_RECLAMOS')
 Exec QUERY_SQUAD.Migracion_Cupon_Reclamo
+PRINT('MIGRANDO HORARIOS DE LOCAL')
 Exec QUERY_SQUAD.Migracion_Horario_Local
+PRINT('MIGRANDO ENVIOS DE MENSAJERIA')
 Exec QUERY_SQUAD.Migracion_Envio_Mensajeria
+PRINT('MIGRANDO CUPONES POR PEDIDO')
 Exec QUERY_SQUAD.Migracion_Pedido_Cupones

@@ -193,14 +193,14 @@ GO
 CREATE TABLE QUERY_SQUAD.Tipo_Cupon
 (
     tipo_cupon_id INT PRIMARY KEY IDENTITY,
-    tipo_cupon_descripcion NVARCHAR(50)
+    tipo_cupon_tipo NVARCHAR(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Estado_Pedido
 (
     estado_pedido_id INT PRIMARY KEY IDENTITY,
-    estado_pedido_descripcion NVARCHAR(50)
+    estado_pedido_estado NVARCHAR(50)
 )
 GO
 
@@ -220,36 +220,36 @@ GO
 CREATE TABLE QUERY_SQUAD.Datos_Tarjeta
 (
     datos_tarjeta_id INT PRIMARY KEY IDENTITY,
-    medio_de_pago_marca_tarjeta NVARCHAR(100),
-    medio_de_pago_tarjeta NVARCHAR(50)
+    datos_tarjeta_marca NVARCHAR(100),
+    datos_tarjeta_numero NVARCHAR(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Movilidad
 (
     tipo_movilidad_id INT PRIMARY KEY IDENTITY,
-    tipo_movilidad_descripcion NVARCHAR(50)
+    tipo_movilidad_tipo NVARCHAR(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Tipo_Medio_De_Pago
 (
-    tipo_medio_de_pago INT PRIMARY KEY IDENTITY,
-    tipo_medio_de_pago_descripcion NVARCHAR(50)
+    tipo_medio_de_pago_id INT PRIMARY KEY IDENTITY,
+    tipo_medio_de_pago_tipo NVARCHAR(50)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Localidad
 (
     localidad_id INT PRIMARY KEY IDENTITY,
-    localidad_localidad NVARCHAR(255)
+    localidad_nombre NVARCHAR(255)
 )
 GO
 
 CREATE TABLE QUERY_SQUAD.Estado_Envio_Mensajeria
 (
     estado_envio_mensajeria_id INT PRIMARY KEY IDENTITY,
-    estado_envio_mensajeria_descripcion NVARCHAR(50)
+    estado_envio_mensajeria_estado NVARCHAR(50)
 )
 GO
 
@@ -263,7 +263,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Estado_Reclamo
 (
     estado_reclamo_id INT PRIMARY KEY IDENTITY,
-    estado_reclamo_descripcion NVARCHAR(50)
+    estado_reclamo_estado NVARCHAR(50)
 )
 GO
 
@@ -309,7 +309,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Categoria_Local
 (
     categoria_local_id INT PRIMARY KEY IDENTITY,
-    categoria_local_tipo INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
+    categoria_local_tipo_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
     categoria_local_categoria NVARCHAR(50),
 )
 GO
@@ -317,9 +317,9 @@ GO
 CREATE TABLE QUERY_SQUAD.Local
 (
     local_id INT PRIMARY KEY IDENTITY,
-    local_tipo INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
-    local_categoria INT FOREIGN KEY REFERENCES QUERY_SQUAD.Categoria_Local,
-    local_localidad INT FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
+    local_tipo_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Local NOT NULL,
+    local_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Categoria_Local,
+    local_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
     local_nombre NVARCHAR(100),
     local_descripcion NVARCHAR(255),
     local_direccion NVARCHAR(255),
@@ -329,12 +329,11 @@ GO
 
 CREATE TABLE QUERY_SQUAD.Producto_Local
 (
-	producto_local_codigo NVARCHAR(50),
 	producto_local_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
+	producto_local_codigo NVARCHAR(50),
     producto_local_nombre NVARCHAR(50),
     producto_local_descripcion NVARCHAR(255),
     producto_local_precio DECIMAL(18,2),
-
 	PRIMARY KEY (producto_local_codigo, producto_local_local_id)
 )
 GO
@@ -343,7 +342,7 @@ CREATE TABLE QUERY_SQUAD.Repartidor
 (
     repartidor_id INT PRIMARY KEY IDENTITY,
     repartidor_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
-    repartidor_tipo_movilidad INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Movilidad NOT NULL,
+    repartidor_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Movilidad NOT NULL,
     repartidor_nombre NVARCHAR(255),
     repartidor_apellido NVARCHAR(255),
     repartidor_dni DECIMAL(18,0),
@@ -369,8 +368,8 @@ CREATE TABLE QUERY_SQUAD.Medio_De_Pago
 (
     medio_de_pago_id INT PRIMARY KEY IDENTITY,
     medio_de_pago_usuario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Usuario NOT NULL,
-    medio_de_pago_datos_tarjeta INT FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta,
-    medio_de_pago_tipo INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,
+    medio_de_pago_datos_tarjeta_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Datos_Tarjeta,
+    medio_de_pago_tipo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Medio_De_Pago NOT NULL,
 )
 GO
 
@@ -400,12 +399,11 @@ GO
 CREATE TABLE QUERY_SQUAD.Pedido_Productos
 (
 	pedido_producto_id INT PRIMARY KEY IDENTITY,
-	pedido_productos_pedido_id DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL,
-    pedido_productos_producto_local_codigo NVARCHAR(50) NOT NULL,
     pedido_productos_local_id INT NOT NULL,
+    pedido_productos_producto_local_codigo NVARCHAR(50) NOT NULL,
+	pedido_productos_pedido_id DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL,
     producto_cantidad DECIMAL(18,0),
     producto_precio DECIMAL(18,2),
-
 	FOREIGN KEY(pedido_productos_producto_local_codigo, pedido_productos_local_id) REFERENCES QUERY_SQUAD.Producto_Local
 )
 GO
@@ -413,7 +411,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Cupon
 (
     cupon_nro DECIMAL(18,0) PRIMARY KEY,
-    cupon_tipo INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Cupon NOT NULL,
+    cupon_tipo_cupon_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Tipo_Cupon NOT NULL,
     cupon_monto DECIMAL(18,2),
     cupon_fecha_alta DATETIME2(3),
     cupon_fecha_vencimiento DATETIME2(3)
@@ -453,7 +451,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Horario_Local
 (
     horario_local_id INT PRIMARY KEY IDENTITY,
-    horario_local_id_local INT FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
+    horario_local_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Local NOT NULL,
     horario_local_dia INT FOREIGN KEY REFERENCES QUERY_SQUAD.Dia NOT NULL,
     horario_local_hora_apertura DECIMAL(18,0),
     horario_local_hora_cierre DECIMAL(18,0)
@@ -468,7 +466,7 @@ CREATE TABLE QUERY_SQUAD.Envio_Mensajeria
     envio_mensajeria_repartidor_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Repartidor NOT NULL,
     envio_mensajeria_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Localidad NOT NULL,
     envio_mensajeria_paquete_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Paquete NOT NULL,
-    envio_mensajeria_estado INT FOREIGN KEY REFERENCES QUERY_SQUAD.Estado_Envio_Mensajeria NOT NULL,
+    envio_mensajeria_estado_envio_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.Estado_Envio_Mensajeria NOT NULL,
     envio_mensajeria_dir_orig NVARCHAR(255),
     envio_mensajeria_dir_dest NVARCHAR(255),
     envio_mensajeria_provincia NVARCHAR(255),
@@ -489,7 +487,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Pedido_Cupones
 (
     pedido_cupones_cupon_id DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Cupon NOT NULL,
-    pedido_cupones_pedido DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL
+    pedido_cupones_pedido_nro DECIMAL(18,0) FOREIGN KEY REFERENCES QUERY_SQUAD.Pedido NOT NULL
 )
 GO
 ----------CREACION PROCEDURES-------------------
@@ -499,7 +497,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Cupon
 AS
 INSERT INTO QUERY_SQUAD.Tipo_Cupon
-    (tipo_cupon_descripcion)
+    (tipo_cupon_tipo)
 SELECT DISTINCT Cupon_Tipo
 FROM gd_esquema.Maestra
 WHERE CUPON_TIPO IS NOT NULL
@@ -508,7 +506,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Pedido
 AS
 INSERT INTO QUERY_SQUAD.Estado_Pedido
-    (estado_pedido_descripcion)
+    (estado_pedido_estado)
 SELECT DISTINCT PEDIDO_ESTADO
 FROM gd_esquema.Maestra
 WHERE PEDIDO_ESTADO IS NOT NULL
@@ -526,7 +524,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Datos_Tarjeta
 AS
 INSERT INTO QUERY_SQUAD.Datos_Tarjeta
-    (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta)
+    (datos_tarjeta_marca, datos_tarjeta_numero)
 SELECT DISTINCT MARCA_TARJETA, MEDIO_PAGO_NRO_TARJETA
 FROM gd_esquema.Maestra
 --WHERE MARCA_TARJETA IS NOT NULL AND MEDIO_PAGO_NRO_TARJETA IS NOT NULL
@@ -535,7 +533,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Movilidad
 AS
 INSERT INTO QUERY_SQUAD.Tipo_Movilidad
-    (tipo_movilidad_descripcion)
+    (tipo_movilidad_tipo)
 SELECT DISTINCT REPARTIDOR_TIPO_MOVILIDAD
 FROM gd_esquema.Maestra
 --WHERE REPARTIDOR_TIPO_MOVILIDAD IS NOT NULL
@@ -544,7 +542,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Medio_De_Pago
 AS
 INSERT INTO QUERY_SQUAD.Tipo_Medio_De_Pago
-    (tipo_medio_de_pago_descripcion)
+    (tipo_medio_de_pago_tipo)
 SELECT DISTINCT MEDIO_PAGO_TIPO
 FROM gd_esquema.Maestra
 --WHERE MEDIO_PAGO_TIPO IS NOT NULL
@@ -553,7 +551,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Localidad
 AS
 INSERT INTO QUERY_SQUAD.Localidad
-    (localidad_localidad)
+    (localidad_nombre)
 SELECT LOCAL_LOCALIDAD FROM gd_esquema.Maestra WHERE LOCAL_LOCALIDAD is not null UNION 
 SELECT ENVIO_MENSAJERIA_LOCALIDAD FROM gd_esquema.Maestra WHERE ENVIO_MENSAJERIA_LOCALIDAD is not null
 GO
@@ -561,7 +559,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Envio_Mensajeria
 AS
 INSERT INTO QUERY_SQUAD.Estado_Envio_Mensajeria
-    (estado_envio_mensajeria_descripcion)
+    (estado_envio_mensajeria_estado)
 SELECT DISTINCT ENVIO_MENSAJERIA_ESTADO
 FROM gd_esquema.Maestra
 WHERE ENVIO_MENSAJERIA_ESTADO IS NOT NULL
@@ -580,7 +578,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Estado_Reclamo
 AS
 INSERT INTO QUERY_SQUAD.Estado_Reclamo
-    (estado_reclamo_descripcion)
+    (estado_reclamo_estado)
 SELECT DISTINCT RECLAMO_ESTADO
 FROM gd_esquema.Maestra
 WHERE RECLAMO_ESTADO IS NOT NULL
@@ -627,7 +625,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Local
 AS
 INSERT INTO QUERY_SQUAD.Local
-    (local_tipo, local_localidad, local_nombre, local_descripcion, local_direccion, local_provincia)
+    (local_tipo_local_id, local_localidad_id, local_nombre, local_descripcion, local_direccion, local_provincia)
 SELECT DISTINCT
     tipo.tipo_local_id,
     localid.localidad_id,
@@ -637,7 +635,7 @@ SELECT DISTINCT
     esquema.LOCAL_PROVINCIA
 FROM gd_esquema.Maestra esquema
     JOIN QUERY_SQUAD.Tipo_Local tipo ON esquema.LOCAL_TIPO = tipo.tipo_local_tipo
-    JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_localidad
+    JOIN QUERY_SQUAD.Localidad localid ON esquema.LOCAL_LOCALIDAD = localid.localidad_nombre
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Producto_Local
@@ -698,11 +696,11 @@ FETCH NEXT FROM cursor_repartidor INTO @Repartidor_DNI, @Repartidor_Nombre, @Rep
 									   @REPARTIDOR_EMAIL,@REPARTIDOR_TELEFONO, @REPARTIDOR_FECHA_NAC, @LOCAL_LOCALIDAD, @PEDIDO_FECHA_ENTREGA, @ENVIO_MENSAJERIA_LOCALIDAD, @ENVIO_MENSAJERIA_FECHA_ENTREGA
 WHILE @@FETCH_STATUS = 0  
     BEGIN
-		SET @Tipo_Movilidad_ID = (SELECT t.tipo_movilidad_id FROM QUERY_SQUAD.Tipo_Movilidad t WHERE t.tipo_movilidad_descripcion = @REPARTIDOR_TIPO_MOVILIDAD)
+		SET @Tipo_Movilidad_ID = (SELECT t.tipo_movilidad_id FROM QUERY_SQUAD.Tipo_Movilidad t WHERE t.tipo_movilidad_tipo = @REPARTIDOR_TIPO_MOVILIDAD)
 		IF (@PEDIDO_FECHA_ENTREGA >= @ENVIO_MENSAJERIA_FECHA_ENTREGA)
-			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_localidad = @LOCAL_LOCALIDAD)
+			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_nombre = @LOCAL_LOCALIDAD)
 		ELSE
-			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_localidad = @ENVIO_MENSAJERIA_LOCALIDAD)
+			SET @Localidad_ID = (SELECT l.localidad_id FROM QUERY_SQUAD.Localidad l WHERE l.localidad_nombre = @ENVIO_MENSAJERIA_LOCALIDAD)
 
 		INSERT INTO QUERY_SQUAD.Repartidor VALUES( 
 			   @Localidad_ID, @Tipo_Movilidad_ID, @Repartidor_Nombre, @Repartidor_Apellido, @Repartidor_DNI, @REPARTIDOR_TELEFONO, 
@@ -722,19 +720,19 @@ INSERT INTO QUERY_SQUAD.Direccion_Usuario
 SELECT DISTINCT u.usuario_id, m.DIRECCION_USUARIO_DIRECCION, loc.localidad_id, m.DIRECCION_USUARIO_NOMBRE, m.DIRECCION_USUARIO_PROVINCIA
 FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-    JOIN QUERY_SQUAD.Localidad loc ON (m.DIRECCION_USUARIO_LOCALIDAD = loc.localidad_localidad)
+    JOIN QUERY_SQUAD.Localidad loc ON (m.DIRECCION_USUARIO_LOCALIDAD = loc.localidad_nombre)
 Where DIRECCION_USUARIO_DIRECCION IS NOT NULL
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Medio_De_Pago
 AS
 INSERT INTO QUERY_SQUAD.Medio_De_Pago
-    (medio_de_pago_usuario_id, medio_de_pago_datos_tarjeta, medio_de_pago_tipo)
-SELECT DISTINCT u.usuario_id, datos.datos_tarjeta_id, tipo.tipo_medio_de_pago
+    (medio_de_pago_usuario_id, medio_de_pago_datos_tarjeta_id, medio_de_pago_tipo_id)
+SELECT DISTINCT u.usuario_id, datos.datos_tarjeta_id, tipo.tipo_medio_de_pago_id
 FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA and datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
-    JOIN QUERY_SQUAD.Tipo_Medio_De_Pago tipo ON (tipo.tipo_medio_de_pago_descripcion = m.MEDIO_PAGO_TIPO)
+    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.datos_tarjeta_marca= m.MARCA_TARJETA and datos.datos_tarjeta_numero = m.MEDIO_PAGO_NRO_TARJETA)
+    JOIN QUERY_SQUAD.Tipo_Medio_De_Pago tipo ON (tipo.tipo_medio_de_pago_tipo = m.MEDIO_PAGO_TIPO)
 Where m.PEDIDO_NRO IS NOT NULL
 GO
 
@@ -753,10 +751,10 @@ AS
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
 	JOIN QUERY_SQUAD.Direccion_Usuario d ON (d.direccion_usuario_usuario_id = u.usuario_id AND d.direccion_usuario_nombre = m.DIRECCION_USUARIO_NOMBRE)
     JOIN QUERY_SQUAD.Repartidor r ON (m.REPARTIDOR_DNI = r.repartidor_dni)
-    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA and datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
-	JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta AND mp.medio_de_pago_usuario_id = u.usuario_id)
+    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.datos_tarjeta_marca= m.MARCA_TARJETA and datos.datos_tarjeta_numero = m.MEDIO_PAGO_NRO_TARJETA)
+	JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta_id AND mp.medio_de_pago_usuario_id = u.usuario_id)
 	JOIN QUERY_SQUAD.Local l ON (l.local_nombre = m.LOCAL_NOMBRE)
-    JOIN QUERY_SQUAD.Estado_Pedido ep on (ep.estado_pedido_descripcion = m.PEDIDO_ESTADO)
+    JOIN QUERY_SQUAD.Estado_Pedido ep on (ep.estado_pedido_estado = m.PEDIDO_ESTADO)
 	WHERE PEDIDO_NRO is not null
 	order by PEDIDO_NRO
 	
@@ -773,7 +771,7 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Cupon
 AS
-    INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento)
+    INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo_cupon_id, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento)
     SELECT DISTINCT 
 			m.CUPON_NRO,
             t.tipo_cupon_id,
@@ -781,10 +779,10 @@ AS
             m.CUPON_FECHA_ALTA,
             m.CUPON_FECHA_VENCIMIENTO
     FROM gd_esquema.Maestra m
-    JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_descripcion)  
+    JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_TIPO = t.tipo_cupon_tipo)  
     WHERE m.CUPON_NRO IS NOT NULL
 
-    INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento) --INSERTA LOS CUPONES RECLAMO QUE NO ESTAN CARGADOS COMO CUPON (98212298 y 40124215)
+    INSERT INTO QUERY_SQUAD.Cupon (cupon_nro, cupon_tipo_cupon_id, cupon_monto, cupon_fecha_alta, cupon_fecha_vencimiento) --INSERTA LOS CUPONES RECLAMO QUE NO ESTAN CARGADOS COMO CUPON (98212298 y 40124215)
     SELECT DISTINCT 
 			m.CUPON_RECLAMO_NRO,
 			t.tipo_cupon_id,
@@ -792,7 +790,7 @@ AS
             m.CUPON_RECLAMO_FECHA_ALTA,
             m.CUPON_RECLAMO_FECHA_VENCIMIENTO
 	FROM gd_esquema.Maestra m
-	JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_RECLAMO_TIPO = t.tipo_cupon_descripcion)
+	JOIN QUERY_SQUAD.Tipo_Cupon t ON (m.CUPON_RECLAMO_TIPO = t.tipo_cupon_tipo)
 	WHERE NOT EXISTS (
     SELECT *
     FROM QUERY_SQUAD.Cupon
@@ -821,7 +819,7 @@ AS
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
     JOIN QUERY_SQUAD.Operador_Reclamo o ON(o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI AND o.operador_reclamo_apellido = m.OPERADOR_RECLAMO_APELLIDO AND o.operador_reclamo_nombre = m.OPERADOR_RECLAMO_NOMBRE)  
     JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_tipo = m.RECLAMO_TIPO)
-    JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
+    JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_estado = m.RECLAMO_ESTADO)
     WHERE RECLAMO_NRO is not null
     --Migracion_Reclamo
 GO
@@ -838,7 +836,7 @@ GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Horario_Local
 AS
-    INSERT INTO QUERY_SQUAD.Horario_Local (horario_local_id_local, horario_local_dia, horario_local_hora_apertura, horario_local_hora_cierre)
+    INSERT INTO QUERY_SQUAD.Horario_Local (horario_local_local_id, horario_local_dia, horario_local_hora_apertura, horario_local_hora_cierre)
     SELECT DISTINCT
     l.local_id,
     d.dia_id,
@@ -853,7 +851,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Envio_Mensajeria
 AS
     INSERT INTO QUERY_SQUAD.Envio_Mensajeria (envio_mensajeria_nro, envio_mensajeria_usuario_id, envio_mensajeria_medio_de_pago_id, 
-    envio_mensajeria_repartidor_id, envio_mensajeria_localidad_id, envio_mensajeria_paquete_id, envio_mensajeria_estado, envio_mensajeria_dir_orig,
+    envio_mensajeria_repartidor_id, envio_mensajeria_localidad_id, envio_mensajeria_paquete_id, envio_mensajeria_estado_envio_id, envio_mensajeria_dir_orig,
     envio_mensajeria_dir_dest, envio_mensajeria_provincia, envio_mensajeria_km, envio_mensajeria_valor_asegurado, envio_mensajeria_precio_envio, 
     envio_mensajeria_precio_seguro, envio_mensajeria_propina, envio_mensajeria_total, envio_mensajeria_observ, envio_mensajeria_fecha, 
     envio_mensajeria_fecha_entrega, envio_mensajeria_tiempo_estimado, envio_mensajeria_calificacion)
@@ -865,19 +863,19 @@ AS
     
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
-    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.medio_de_pago_marca_tarjeta= m.MARCA_TARJETA AND datos.medio_de_pago_tarjeta = m.MEDIO_PAGO_NRO_TARJETA)
-    JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta AND mp.medio_de_pago_usuario_id = u.usuario_id)
+    JOIN QUERY_SQUAD.Datos_Tarjeta datos ON (datos.datos_tarjeta_marca= m.MARCA_TARJETA AND datos.datos_tarjeta_numero = m.MEDIO_PAGO_NRO_TARJETA)
+    JOIN QUERY_SQUAD.Medio_De_Pago mp ON (datos.datos_tarjeta_id = mp.medio_de_pago_datos_tarjeta_id AND mp.medio_de_pago_usuario_id = u.usuario_id)
     JOIN QUERY_SQUAD.Repartidor r ON (m.REPARTIDOR_DNI = r.repartidor_dni)
-    JOIN QUERY_SQUAD.Localidad l ON (m.ENVIO_MENSAJERIA_LOCALIDAD = l.localidad_localidad)
+    JOIN QUERY_SQUAD.Localidad l ON (m.ENVIO_MENSAJERIA_LOCALIDAD = l.localidad_nombre)
     JOIN QUERY_SQUAD.Paquete p ON (m.PAQUETE_TIPO = p.paquete_tipo)
-    JOIN QUERY_SQUAD.Estado_Envio_Mensajeria estado ON (m.ENVIO_MENSAJERIA_ESTADO = estado.estado_envio_mensajeria_descripcion)
+    JOIN QUERY_SQUAD.Estado_Envio_Mensajeria estado ON (m.ENVIO_MENSAJERIA_ESTADO = estado.estado_envio_mensajeria_estado)
     
 
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Pedido_Cupones
 AS
-    INSERT INTO QUERY_SQUAD.Pedido_Cupones (pedido_cupones_cupon_id, pedido_cupones_pedido)
+    INSERT INTO QUERY_SQUAD.Pedido_Cupones (pedido_cupones_cupon_id, pedido_cupones_pedido_nro)
     SELECT DISTINCT
     c.cupon_nro,
     p.pedido_nro
@@ -904,7 +902,7 @@ PRINT('MIGRANDO DATOS TARJETA')
 Exec QUERY_SQUAD.Migracion_Datos_Tarjeta
 
 CREATE INDEX idx_medio_de_pago_marca_tarjeta_tarjeta
-ON QUERY_SQUAD.Datos_Tarjeta (medio_de_pago_marca_tarjeta, medio_de_pago_tarjeta)
+ON QUERY_SQUAD.Datos_Tarjeta (datos_tarjeta_marca, datos_tarjeta_numero)
 
 PRINT('MIGRANDO TIPOS DE MOVILIDAD')
 Exec QUERY_SQUAD.Migracion_Tipo_Movilidad
@@ -946,7 +944,7 @@ PRINT('MIGRANDO MEDIOS DE PAGO')
 Exec QUERY_SQUAD.Migracion_Medio_De_Pago
 
 CREATE INDEX idx_medio_de_pago_datos_tarjeta_usuario_id
-ON QUERY_SQUAD.Medio_De_Pago (medio_de_pago_datos_tarjeta, medio_de_pago_usuario_id)
+ON QUERY_SQUAD.Medio_De_Pago (medio_de_pago_datos_tarjeta_id, medio_de_pago_usuario_id)
 
 PRINT('MIGRANDO PEDIDOS')
 Exec QUERY_SQUAD.Migracion_Pedido

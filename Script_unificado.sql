@@ -256,7 +256,7 @@ GO
 CREATE TABLE QUERY_SQUAD.Tipo_Reclamo
 (
     tipo_reclamo_id INT PRIMARY KEY IDENTITY,
-    tipo_reclamo_descripcion NVARCHAR(50)
+    tipo_reclamo_tipo NVARCHAR(50)
 )
 GO
 
@@ -570,7 +570,7 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.Migracion_Tipo_Reclamo
 AS
 INSERT INTO QUERY_SQUAD.Tipo_Reclamo
-    (tipo_reclamo_descripcion)
+    (tipo_reclamo_tipo)
 SELECT DISTINCT RECLAMO_TIPO
 FROM gd_esquema.Maestra
 WHERE RECLAMO_TIPO IS NOT NULL
@@ -820,7 +820,7 @@ AS
     FROM gd_esquema.Maestra m
     JOIN QUERY_SQUAD.Usuario u ON (u.usuario_dni = m.USUARIO_DNI)
     JOIN QUERY_SQUAD.Operador_Reclamo o ON(o.operador_reclamo_dni = m.OPERADOR_RECLAMO_DNI AND o.operador_reclamo_apellido = m.OPERADOR_RECLAMO_APELLIDO AND o.operador_reclamo_nombre = m.OPERADOR_RECLAMO_NOMBRE)  
-    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_descripcion = m.RECLAMO_TIPO)
+    JOIN QUERY_SQUAD.Tipo_Reclamo tr ON (tr.tipo_reclamo_tipo = m.RECLAMO_TIPO)
     JOIN QUERY_SQUAD.Estado_Reclamo er ON(er.estado_reclamo_descripcion = m.RECLAMO_ESTADO)
     WHERE RECLAMO_NRO is not null
     --Migracion_Reclamo

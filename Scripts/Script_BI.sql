@@ -241,16 +241,16 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Rango_Horario
 AS
 BEGIN
-    DECLARE @HoraInicio TIME = '08:00:00';
-    DECLARE @HoraFin TIME = '10:00:00';
+    DECLARE @hora_inicio TIME = '08:00:00';
+    DECLARE @hora_fin TIME = '10:00:00';
 
-    WHILE @HoraInicio < '22:00:00'
+    WHILE @hora_inicio < '22:00:00'
     BEGIN
         INSERT INTO BI_dim_Rango_Horario(rango_horario_hora_inicio,rango_horario_hora_fin)
-        VALUES (@HoraInicio, @HoraFin);
+        VALUES (@hora_inicio, @hora_fin);
 
-        SET @HoraInicio = DATEADD(HOUR, 2, @HoraInicio);
-        SET @HoraFin = DATEADD(HOUR, 2, @HoraFin);
+        SET @hora_inicio = DATEADD(HOUR, 2, @hora_inicio);
+        SET @hora_fin = DATEADD(HOUR, 2, @hora_fin);
     END;
 
     INSERT INTO BI_dim_Rango_Horario (rango_horario_hora_inicio, rango_horario_hora_fin)

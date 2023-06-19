@@ -83,11 +83,11 @@ IF EXISTS (SELECT * FROM sys.procedures WHERE object_id = OBJECT_ID('QUERY_SQUAD
 
 IF EXISTS (SELECT * FROM sys.procedures WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Reclamos'))
     DROP PROCEDURE QUERY_SQUAD.BI_migrar_Estado_Reclamos;
+------------------------------------------------------------------
 CREATE TABLE QUERY_SQUAD.BI_dim_Dia(
 dia_id int PRIMARY KEY,
 dia_nombre nvarchar(255)
 );
-----------------------------------------------------------
 
 CREATE TABLE QUERY_SQUAD.BI_dim_Tipo_Local(
 tipo_local_id int PRIMARY KEY,
@@ -241,21 +241,21 @@ GO
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Rango_Horario
 AS
 BEGIN
-  DECLARE @hora_inicio TIME = '08:00:00';
-  DECLARE @hora_fin TIME = '10:00:00';
+    DECLARE @HoraInicio TIME = '08:00:00';
+    DECLARE @HoraFin TIME = '10:00:00';
 
-   WHILE @hora_inicio <= '23:00:00'
+    WHILE @HoraInicio < '22:00:00'
     BEGIN
-        INSERT INTO QUERY_SQUAD.BI_dim_Rango_Horario(rango_horario_hora_inicio, rango_horario_hora_fin)
-        VALUES (@hora_inicio, @hora_fin)
+        INSERT INTO BI_dim_Rango_Horario(rango_horario_hora_inicio,rango_horario_hora_fin)
+        VALUES (@HoraInicio, @HoraFin);
 
-        SET @hora_inicio = DATEADD(hour, 2, @hora_inicio)
-        SET @hora_fin = DATEADD(hour, 2, @hora_fin)
-    END
+        SET @HoraInicio = DATEADD(HOUR, 2, @HoraInicio);
+        SET @HoraFin = DATEADD(HOUR, 2, @HoraFin);
+    END;
 
-    INSERT INTO QUERY_SQUAD.BI_dim_Rango_Horario(rango_horario_hora_inicio, rango_horario_hora_fin)
-    VALUES ('23:00:00', '00:00:00')
-END
+    INSERT INTO BI_dim_Rango_Horario (rango_horario_hora_inicio, rango_horario_hora_fin)
+    VALUES ('22:00:00', '00:00:00');
+END;
 GO
 
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Tipo_Medio_De_Pago

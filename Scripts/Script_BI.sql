@@ -121,10 +121,9 @@ tipo_paquete_tipo nvarchar(50)
 );
 
 CREATE TABLE QUERY_SQUAD.BI_dim_Tiempo(
-tiempo_anio INT,
-tiempo_mes INT
-
-PRIMARY KEY(tiempo_anio, tiempo_mes)
+tiempo_id int IDENTITY PRIMARY KEY,
+tiempo_anio int,
+tiempo_mes int
 );
 
 CREATE TABLE QUERY_SQUAD.BI_dim_Rango_Horario(
@@ -157,6 +156,23 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos(
 estado_reclamos_id int PRIMARY KEY,
 estado_reclamos_estado nvarchar(50)
 );
+
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos(
+hechos_pedidos_tiempo_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+hechos_pedidos_dia_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
+hechos_pedidos_local_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
+hechos_pedidos_rango_horario_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario, 
+hechos_pedidos_localidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
+hechos_pedidos_categoria_local_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local,
+hechos_pedidos_tipo_movilidad_id int FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad,
+hehcos_pedidos_cantidad int,
+hechos_pedidos_monto_total_no_cobrado decimal(18,2),
+hechos_pedidos_valor_promedio_envio  decimal(18,2)
+CONSTRAINT PK_BI_Hechos_Pedidos PRIMARY KEY (hechos_pedidos_tiempo_id, hechos_pedidos_dia_id, hechos_pedidos_local_id, 
+hechos_pedidos_rango_horario_id, hechos_pedidos_localidad_id, hechos_pedidos_categoria_local_id, hechos_pedidos_tipo_movilidad_id)
+);
+
 
 GO
 -------------------------------------------------------------------------------------
@@ -302,4 +318,133 @@ INSERT INTO QUERY_SQUAD.BI_dim_Estado_Reclamos(estado_reclamos_id,estado_reclamo
 SELECT estado_reclamo_id, estado_reclamo_descripcion
 FROM QUERY_SQUAD.Estado_Reclamo
 END
+GO
+
+
+
+
+
+
+
+
+
+
+CREATE FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha (
+	@fecha date
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @idTiempo int = (
+		SELECT T.tiempo_id FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
+		WHERE T.tiempo_anio = YEAR(@fecha) AND T.tiempo_mes = MONTH(@fecha)
+	);
+	RETURN @idTiempo;
+END
+GO
+
+
+CREATE FUNCTION QUERY_SQUAD.GetDimDiaParaFecha (
+	@fecha date
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @idDia int = (
+		SELECT D.dia_id FROM QUERY_SQUAD.BI_Dim_Dia AS D
+		WHERE D.dia_nombre = DAY(@fecha) --- ver como matchear el dia con el nombre 
+	);
+	RETURN @idDia;
+END
+GO
+
+
+
+
+CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Pedidos
+AS
+BEGIN
+INSERT INTO QUERY_SQUAD.BI_Hechos_Pedidos(hechos_pedidos_tiempo_id, hechos_pedidos_dia_id, hechos_pedidos_local_id,hechos_pedidos_rango_horario_id, 
+								hechos_pedidos_localidad_id, hechos_pedidos_categoria_local_id, hechos_pedidos_tipo_movilidad_id, hehcos_pedidos_cantidad,
+								hechos_pedidos_monto_total_no_cobrado, hechos_pedidos_valor_promedio_envio)
+SELECT 
+	QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha),
+	QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha),
+	L.local_id,
+	NULL, -- ver como sacar la hora
+	Lo.localidad_id,
+	C.categoria_local_id,
+	R.repartidor_tipo_movilidad,
+	count(DISTINCT P.pedido_nro),
+	(SELECT sum(pedido_total_servicio) FROM QUERY_SQUAD.Pedido 
+		WHERE pedido_estado_pedido_id = 2 AND pedido_local_id = L.local_id),
+	(SELECT avg(pedido_precio_envio) FROM QUERY_SQUAD.Pedido INNER JOIN Local ON pedido_local_id = local_id 
+		WHERE local_localidad = Lo.localidad_id )
+
+FROM QUERY_SQUAD.Pedido P INNER JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id
+						INNER JOIN QUERY_SQUAD.Localidad Lo  ON L.local_localidad = Lo.localidad_id
+						INNER JOIN QUERY_SQUAD.Categoria_Local  C ON L.local_categoria = C.categoria_local_id
+						INNER JOIN QUERY_SQUAD.Repartidor  R ON P.pedido_repartidor_id = R.repartidor_id
+						
+END
+GO
+
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------
+
+CREATE FUNCTION QUERY_SQUAD.GetDiaDeDimDia (
+	@idDimDia int
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @dia int = (SELECT D.dia_id FROM QUERY_SQUAD.BI_Dim_Dia AS D WHERE D.dia_id = @idDimDia);
+	RETURN @dia;
+END
+GO
+
+
+CREATE FUNCTION QUERY_SQUAD.GetMesDeDimTiempo (
+	@idDimTiempo int
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @mes int = (SELECT T.tiempo_mes FROM QUERY_SQUAD.BI_Dim_Tiempo AS T WHERE T.tiempo_id = @idDimTiempo);
+	RETURN @mes;
+END
+GO
+
+
+CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (
+	@idDimTiempo int
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @anio int = (SELECT T.tiempo_anio FROM QUERY_SQUAD.BI_Dim_Tiempo AS T WHERE T.tiempo_id = @idDimTiempo);
+	RETURN @anio;
+END
+GO
+
+
+
+
+CREATE VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios
+AS
+	SELECT
+		QUERY_SQUAD.GetMesDeDimTiempo(H_Pedidos.hechos_pedidos_tiempo_id) AS Mes,
+		AVG(H_Pedidos.hechos_pedidos_valor_promedio_envio) AS ValorPromedio
+	FROM QUERY_SQUAD.BI_Hechos_Pedidos AS H_Pedidos
+	GROUP BY H_Pedidos.hechos_pedidos_localidad_id, QUERY_SQUAD.GetMesDeDimTiempo(H_Pedidos.hechos_pedidos_tiempo_id)
+
 GO

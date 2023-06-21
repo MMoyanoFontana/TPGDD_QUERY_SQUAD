@@ -1,11 +1,13 @@
 USE GD1C2023;
 
+----- DROP VISTAS -----
 IF EXISTS (
   SELECT *
 FROM sys.views
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.v_BI_valor_promedio_mensual_envios')
 ) DROP VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios;
 
+----- DROP FUNCIONES -----
 IF EXISTS (
   SELECT *
 FROM sys.objects
@@ -36,6 +38,7 @@ FROM sys.objects
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetAnioDeDimTiempo')
 ) DROP FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo;
 
+----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
 FROM sys.procedures
@@ -126,12 +129,14 @@ FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Reclamos')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Estado_Reclamos;
 
+----- DROP HECHOS -----
 IF EXISTS (
   SELECT *
 FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Pedidos')
 ) DROP TABLE QUERY_SQUAD.BI_Hechos_Pedidos;
 
+----- DROP DIMENSIONES -----
 IF EXISTS (
   SELECT *
 FROM sys.tables
@@ -216,6 +221,7 @@ FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_dim_Estado_Reclamos')
 ) DROP TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos;
 
+----- CREACION DIMENSIONES -----
 CREATE TABLE QUERY_SQUAD.BI_dim_Tiempo
 (
   tiempo_id INT IDENTITY PRIMARY KEY
@@ -303,6 +309,7 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos
   ,estado_reclamos_estado NVARCHAR(50)
 );
 
+----- CREACION HECHOS -----
 CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 (
   hechos_pedidos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
@@ -326,6 +333,7 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 );
 GO
 
+----- CREACION PROCEDIMIENTOS -----
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Dia
 AS
 BEGIN
@@ -548,6 +556,7 @@ BEGIN
 END;
 GO
 
+----- CREACION FUNCIONES -----
 CREATE FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha (@fecha DATE) RETURNS INT AS BEGIN
   RETURN (
     SELECT T.tiempo_id
@@ -594,6 +603,7 @@ CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (@idDimTiempo INT) RETURNS INT AS
 END;
 GO
 
+----- CREACION VISTAS -----
 CREATE VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios
 AS
   SELECT QUERY_SQUAD.GetMesDeDimTiempo(H_Pedidos.hechos_pedidos_tiempo_id) AS Mes

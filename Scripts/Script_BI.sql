@@ -348,7 +348,7 @@ CREATE FUNCTION QUERY_SQUAD.GetDimDiaParaFecha (@fecha DATE) RETURNS INT AS BEGI
   RETURN (
     SELECT D.dia_id
   FROM QUERY_SQUAD.BI_Dim_Dia AS D
-  WHERE D.dia_nombre = DAY(@fecha) --- ver como matchear el dia con el nombre 
+  WHERE D.dia_nombre LIKE FORMAT(@fecha, 'dddd', 'es-ES') COLLATE Latin1_General_CI_AI ---FORMAT da el nombre del dia, COLLATE hace que la comparacion ignore acentos 
   )
 END;
 GO
@@ -593,7 +593,7 @@ BEGIN
       SELECT avg(pedido_precio_envio)
     FROM QUERY_SQUAD.Pedido
       INNER JOIN LOCAL ON pedido_local_id = local_id
-    WHERE local_localidad = Lo.localidad_id
+    WHERE local_localidad_id = Lo.localidad_id
     )
   FROM QUERY_SQUAD.Pedido P
     INNER JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id

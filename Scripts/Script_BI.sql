@@ -7,37 +7,6 @@ FROM sys.views
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.v_BI_valor_promedio_mensual_envios')
 ) DROP VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios;
 
------ DROP FUNCIONES -----
-IF EXISTS (
-  SELECT *
-FROM sys.objects
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDimTiempoParaFecha')
-) DROP FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha;
-
-IF EXISTS (
-  SELECT *
-FROM sys.objects
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDimDiaParaFecha')
-) DROP FUNCTION QUERY_SQUAD.GetDimDiaParaFecha;
-
-IF EXISTS (
-  SELECT *
-FROM sys.objects
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDiaDeDimDia')
-) DROP FUNCTION QUERY_SQUAD.GetDiaDeDimDia;
-
-IF EXISTS (
-  SELECT *
-FROM sys.objects
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetMesDeDimTiempo')
-) DROP FUNCTION QUERY_SQUAD.GetMesDeDimTiempo;
-
-IF EXISTS (
-  SELECT *
-FROM sys.objects
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetAnioDeDimTiempo')
-) DROP FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo;
-
 ----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
@@ -128,6 +97,37 @@ IF EXISTS (
 FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Reclamos')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Estado_Reclamos;
+
+----- DROP FUNCIONES -----
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDimTiempoParaFecha')
+) DROP FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha;
+
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDimDiaParaFecha')
+) DROP FUNCTION QUERY_SQUAD.GetDimDiaParaFecha;
+
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetDiaDeDimDia')
+) DROP FUNCTION QUERY_SQUAD.GetDiaDeDimDia;
+
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetMesDeDimTiempo')
+) DROP FUNCTION QUERY_SQUAD.GetMesDeDimTiempo;
+
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetAnioDeDimTiempo')
+) DROP FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo;
 
 ----- DROP HECHOS -----
 IF EXISTS (
@@ -333,6 +333,53 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 );
 GO
 
+----- CREACION FUNCIONES -----
+CREATE FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha (@fecha DATE) RETURNS INT AS BEGIN
+  RETURN (
+    SELECT T.tiempo_id
+  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
+  WHERE T.tiempo_anio = YEAR(@fecha)
+    AND T.tiempo_mes = MONTH(@fecha)
+  )
+END;
+GO
+
+CREATE FUNCTION QUERY_SQUAD.GetDimDiaParaFecha (@fecha DATE) RETURNS INT AS BEGIN
+  RETURN (
+    SELECT D.dia_id
+  FROM QUERY_SQUAD.BI_Dim_Dia AS D
+  WHERE D.dia_nombre = DAY(@fecha) --- ver como matchear el dia con el nombre 
+  )
+END;
+GO
+
+CREATE FUNCTION QUERY_SQUAD.GetDiaDeDimDia (@idDimDia INT) RETURNS INT AS BEGIN
+  RETURN (
+    SELECT D.dia_id
+  FROM QUERY_SQUAD.BI_Dim_Dia AS D
+  WHERE D.dia_id = @idDimDia
+  )
+END;
+GO
+
+CREATE FUNCTION QUERY_SQUAD.GetMesDeDimTiempo (@idDimTiempo INT) RETURNS INT AS BEGIN
+  RETURN (
+    SELECT T.tiempo_mes
+  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
+  WHERE T.tiempo_id = @idDimTiempo
+  )
+END;
+GO
+
+CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (@idDimTiempo INT) RETURNS INT AS BEGIN
+  RETURN (
+    SELECT T.tiempo_anio
+  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
+  WHERE T.tiempo_id = @idDimTiempo
+  )
+END;
+GO
+
 ----- CREACION PROCEDIMIENTOS -----
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Dia
 AS
@@ -534,72 +581,25 @@ BEGIN
     -- ver como sacar la hora
     ,Lo.localidad_id
     ,C.categoria_local_id
-    ,R.repartidor_tipo_movilidad
+    ,R.repartidor_tipo_movilidad_id
     ,COUNT(DISTINCT P.pedido_nro)
     ,(
-    SELECT sum(pedido_total_servicio)
+      SELECT sum(pedido_total_servicio)
     FROM QUERY_SQUAD.Pedido
     WHERE pedido_estado_pedido_id = 2
       AND pedido_local_id = L.local_id
-  )
+    )
     ,(
-    SELECT avg(pedido_precio_envio)
+      SELECT avg(pedido_precio_envio)
     FROM QUERY_SQUAD.Pedido
       INNER JOIN LOCAL ON pedido_local_id = local_id
     WHERE local_localidad = Lo.localidad_id
-  )
+    )
   FROM QUERY_SQUAD.Pedido P
     INNER JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id
     INNER JOIN QUERY_SQUAD.Localidad Lo ON L.local_id = Lo.localidad_id
     INNER JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
     INNER JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
-END;
-GO
-
------ CREACION FUNCIONES -----
-CREATE FUNCTION QUERY_SQUAD.GetDimTiempoParaFecha (@fecha DATE) RETURNS INT AS BEGIN
-  RETURN (
-    SELECT T.tiempo_id
-  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
-  WHERE T.tiempo_anio = YEAR(@fecha)
-    AND T.tiempo_mes = MONTH(@fecha)
-  )
-END;
-GO
-
-CREATE FUNCTION QUERY_SQUAD.GetDimDiaParaFecha (@fecha DATE) RETURNS INT AS BEGIN
-  RETURN (
-    SELECT D.dia_id
-  FROM QUERY_SQUAD.BI_Dim_Dia AS D
-  WHERE D.dia_nombre = DAY(@fecha) --- ver como matchear el dia con el nombre 
-  )
-END;
-GO
-
-CREATE FUNCTION QUERY_SQUAD.GetDiaDeDimDia (@idDimDia INT) RETURNS INT AS BEGIN
-  RETURN (
-    SELECT D.dia_id
-  FROM QUERY_SQUAD.BI_Dim_Dia AS D
-  WHERE D.dia_id = @idDimDia
-  )
-END;
-GO
-
-CREATE FUNCTION QUERY_SQUAD.GetMesDeDimTiempo (@idDimTiempo INT) RETURNS INT AS BEGIN
-  RETURN (
-    SELECT T.tiempo_mes
-  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
-  WHERE T.tiempo_id = @idDimTiempo
-  )
-END;
-GO
-
-CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (@idDimTiempo INT) RETURNS INT AS BEGIN
-  RETURN (
-    SELECT T.tiempo_anio
-  FROM QUERY_SQUAD.BI_Dim_Tiempo AS T
-  WHERE T.tiempo_id = @idDimTiempo
-  )
 END;
 GO
 

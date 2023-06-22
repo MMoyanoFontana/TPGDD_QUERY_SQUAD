@@ -98,6 +98,12 @@ FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Reclamos')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Estado_Reclamos;
 
+IF EXISTS (
+  SELECT *
+FROM sys.procedures
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Cupones')
+) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Cupones;
+
 ----- DROP FUNCIONES -----
 IF EXISTS (
   SELECT *
@@ -135,6 +141,37 @@ IF EXISTS (
 FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Pedidos')
 ) DROP TABLE QUERY_SQUAD.BI_Hechos_Pedidos;
+
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Cupones')
+) DROP TABLE QUERY_SQUAD.BI_Hechos_Cupones;
+
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Local')
+) DROP TABLE QUERY_SQUAD.BI_Hechos_Local;
+
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Mensajeria')
+) DROP TABLE QUERY_SQUAD.BI_Hechos_Mensajeria;
+
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Reclamos')
+) DROP TABLE QUERY_SQUAD.BI_Hechos_Reclamos;
+
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Repartidores')
+) DROP TABLE QUERY_SQUAD.BI_Hechos_Repartidores;
+
 
 ----- DROP DIMENSIONES -----
 IF EXISTS (

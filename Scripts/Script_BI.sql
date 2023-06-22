@@ -312,25 +312,86 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos
 ----- CREACION HECHOS -----
 CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 (
-  hechos_pedidos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
-  ,hechos_pedidos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia
-  ,hechos_pedidos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local
-  ,hechos_pedidos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario
-  ,hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad
-  ,hechos_pedidos_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local
-  ,hechos_pedidos_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad
-  ,hehcos_pedidos_cantidad INT
-  ,hechos_pedidos_monto_total_no_cobrado DECIMAL(18, 2)
-  ,hechos_pedidos_valor_promedio_envio DECIMAL(18, 2) CONSTRAINT PK_BI_Hechos_Pedidos PRIMARY KEY (
-    hechos_pedidos_tiempo_id,
-    hechos_pedidos_dia_id,
-    hechos_pedidos_local_id,
-    hechos_pedidos_rango_horario_id,
-    hechos_pedidos_localidad_id,
-    hechos_pedidos_categoria_local_id,
-    hechos_pedidos_tipo_movilidad_id
-  )
+	hechos_pedidos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
+	,hechos_pedidos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia
+	,hechos_pedidos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local
+	,hechos_pedidos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario
+	,hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad
+	,hechos_pedidos_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local
+	,hechos_pedidos_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad
+	,hehcos_pedidos_cantidad INT
+	,hechos_pedidos_monto_total_no_cobrado DECIMAL(18, 2)
+	,hechos_pedidos_valor_promedio_envio DECIMAL(18, 2) CONSTRAINT PK_BI_Hechos_Pedidos PRIMARY KEY (
+		hechos_pedidos_tiempo_id,
+		hechos_pedidos_dia_id,
+		hechos_pedidos_local_id,
+		hechos_pedidos_rango_horario_id,
+		hechos_pedidos_localidad_id,
+		hechos_pedidos_categoria_local_id,
+		hechos_pedidos_tipo_movilidad_id
+	)
 );
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Cupones
+(	
+	hechos_cupones_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_cupones_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,--ver si necesitamos agregar dim_Tipo_Cupon
+	hechos_cupones_monto_total decimal(18,2),
+	hechos_cupones_monto_reclamos decimal(18,2) CONSTRAINT PK_BI_Hechos_Cupones PRIMARY KEY(
+		hechos_cupones_tiempo_id,
+		hechos_cupones_rango_etario_id
+	)
+);
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Local
+(	
+	hechos_local_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
+	hechos_local_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_local_promedio_calificacion decimal(18,2) CONSTRAINT PK_BI_Hechos_Local PRIMARY KEY(
+		hechos_local_local_id,
+		hechos_local_tiempo_id
+	)
+);
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Mensajeria
+(	
+	hechos_mensajeria_tipo_paquete_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Paquete,
+	hechos_mensajeria_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_mensajeria_promedio_mensual_valor decimal(18,2) CONSTRAINT PK_BI_Hechos_Mensajeria PRIMARY KEY(
+		hechos_mensajeria_tipo_paquete_id,
+		hechos_mensajeria_tiempo_id
+	)
+);
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Reclamos
+(	
+	hechos_reclamos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_reclamos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
+	hechos_reclamos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
+	hechos_reclamos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario, --ver si necesitamos agregar dim_Tipo_Reclamo
+	hechos_reclamos_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_reclamos_cantidad decimal(18,2),
+	hechos_reclamos_tiempo_promedio_resolucion decimal(18,2) CONSTRAINT PK_BI_Hechos_Reclamos PRIMARY KEY(
+		hechos_reclamos_tiempo_id,
+		hechos_reclamos_local_id,
+		hechos_reclamos_dia_id,
+		hechos_reclamos_rango_horario_id,
+		hechos_reclamos_rango_etario_id
+	)
+);
+
+CREATE TABLE QUERY_SQUAD.BI_Hechos_Repartidores
+(	
+	hechos_repartidores_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_repartidores_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
+	hechos_repartidores_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_repartidores_porcentaje_pedidos_y_mensajeria_entregados decimal(18,2) CONSTRAINT PK_BI_Hechos_Repartidores PRIMARY KEY(
+		hechos_repartidores_rango_etario_id,
+		hechos_repartidores_localidad_id,
+		hechos_repartidores_tiempo_id
+	)
+);
+
 GO
 
 ----- CREACION FUNCIONES -----
@@ -600,6 +661,31 @@ BEGIN
     INNER JOIN QUERY_SQUAD.Localidad Lo ON L.local_id = Lo.localidad_id
     INNER JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
     INNER JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
+END;
+GO
+
+
+CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Cupones
+AS
+BEGIN
+	INSERT INTO QUERY_SQUAD.BI_Hechos_Cupones
+	(
+	 hechos_cupones_tiempo_id,
+	 hechos_cupones_rango_etario_id,
+	 hechos_cupones_monto_total,
+	 hechos_cupones_monto_reclamos
+	)
+	SELECT QUERY_SQUAD.GetDimTiempoParaFecha(C.cupon_fecha_alta),
+	NULL, --ver como sacar el rango etario
+	P.pedido_total_cupones,
+	ISNULL((
+		SELECT sum(cupon_monto)
+		FROM QUERY_SQUAD.Cupon_Reclamo INNER JOIN QUERY_SQUAD.Cupon ON cupon_reclamo_cupon_nro = cupon_nro
+		WHERE cupon_nro = C.cupon_nro
+	),0)
+	FROM QUERY_SQUAD.Pedido_Cupones PC 
+		INNER JOIN QUERY_SQUAD.Pedido P ON PC.pedido_cupones_pedido_nro = P.pedido_nro
+		INNER JOIN  QUERY_SQUAD.Cupon C ON PC.pedido_cupones_cupon_id = C.cupon_nro
 END;
 GO
 

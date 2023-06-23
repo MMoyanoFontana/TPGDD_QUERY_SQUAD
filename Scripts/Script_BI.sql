@@ -361,23 +361,33 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos
 ----- CREACION HECHOS -----
 CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 (
-	hechos_pedidos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
-	,hechos_pedidos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia
-	,hechos_pedidos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local
-	,hechos_pedidos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario
-	,hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad
-	,hechos_pedidos_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local
-	,hechos_pedidos_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad
-	,hehcos_pedidos_cantidad INT
-	,hechos_pedidos_monto_total_no_cobrado DECIMAL(18, 2)
-	,hechos_pedidos_valor_promedio_envio DECIMAL(18, 2) CONSTRAINT PK_BI_Hechos_Pedidos PRIMARY KEY (
+	hechos_pedidos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
+	hechos_pedidos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
+	hechos_pedidos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
+	hechos_pedidos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario,
+	hechos_pedidos_rango_etario_repartidor_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
+	hechos_pedidos_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local,
+	hechos_pedidos_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad,
+	hechos_pedidos_tipo_medio_pago_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Medio_De_Pago,
+	hechos_pedidos_estado_pedido_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Estado_Pedido,
+	hehcos_pedidos_cantidad_pedidos INT,
+	hechos_pedidos_costo_total DECIMAL(18, 2),
+	hechos_pedidos_valor_promedio_envio DECIMAL(18, 2),
+	hechos_pedidos_calificacion_promedio DECIMAL (18,2),
+	hechos_desvio_promedio_entrega DECIMAL (18,2)
+	
+	CONSTRAINT PK_BI_Hechos_Pedidos PRIMARY KEY (
 		hechos_pedidos_tiempo_id,
 		hechos_pedidos_dia_id,
 		hechos_pedidos_local_id,
 		hechos_pedidos_rango_horario_id,
+		hechos_pedidos_rango_etario_repartidor_id,
 		hechos_pedidos_localidad_id,
 		hechos_pedidos_categoria_local_id,
-		hechos_pedidos_tipo_movilidad_id
+		hechos_pedidos_tipo_movilidad_id,
+		hechos_pedidos_tipo_medio_pago_id,
+		hechos_pedidos_estado_pedido_id
 	)
 );
 
@@ -691,44 +701,47 @@ CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Pedidos
 AS
 BEGIN
   INSERT INTO QUERY_SQUAD.BI_Hechos_Pedidos
-    (
+  (
     hechos_pedidos_tiempo_id,
     hechos_pedidos_dia_id,
     hechos_pedidos_local_id,
     hechos_pedidos_rango_horario_id,
+	hechos_pedidos_rango_etario_repartidor_id,
     hechos_pedidos_localidad_id,
     hechos_pedidos_categoria_local_id,
     hechos_pedidos_tipo_movilidad_id,
-    hehcos_pedidos_cantidad,
-    hechos_pedidos_monto_total_no_cobrado,
-    hechos_pedidos_valor_promedio_envio
+	hechos_pedidos_tipo_medio_pago_id,
+	hechos_pedidos_estado_pedido_id,
+    hehcos_pedidos_cantidad_pedidos,
+    hechos_pedidos_costo_total,
+    hechos_pedidos_valor_promedio_envio,
+	hechos_pedidos_calificacion_promedio,
+	hechos_desvio_promedio_entrega
     )
-  SELECT QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha)
-    ,QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha)
-    ,L.local_id
-    ,NULL
-    -- ver como sacar la hora
-    ,Lo.localidad_id
-    ,C.categoria_local_id
-    ,R.repartidor_tipo_movilidad_id
-    ,COUNT(DISTINCT P.pedido_nro)
-    ,(
-      SELECT sum(pedido_total_servicio)
-    FROM QUERY_SQUAD.Pedido
-    WHERE pedido_estado_pedido_id = 2
-      AND pedido_local_id = L.local_id
-    )
-    ,(
-      SELECT avg(pedido_precio_envio)
-    FROM QUERY_SQUAD.Pedido
-      INNER JOIN LOCAL ON pedido_local_id = local_id
-    WHERE local_localidad_id = Lo.localidad_id
-    )
+  SELECT QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha),
+    QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha),
+    L.local_id,
+    QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)),
+	QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+    Lo.localidad_id,
+    C.categoria_local_id,
+    R.repartidor_tipo_movilidad_id,
+	M.medio_de_pago_tipo_id,
+	P.pedido_estado_pedido_id,
+    COUNT(DISTINCT P.pedido_nro),
+    SUM(P.pedido_total_servicio),
+    AVG(P.pedido_precio_envio),
+	AVG(P.pedido_calificacion),
+	AVG(DATEDIFF(minute,p.pedido_fecha, p.pedido_fecha_entrega) - p.pedido_tiempo_estimado)
   FROM QUERY_SQUAD.Pedido P
     INNER JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id
-    INNER JOIN QUERY_SQUAD.Localidad Lo ON L.local_id = Lo.localidad_id
+    INNER JOIN QUERY_SQUAD.Localidad Lo ON L.local_localidad_id = Lo.localidad_id
     INNER JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
     INNER JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
+	INNER JOIN QUERY_SQUAD.Medio_De_Pago M On P.pedido_medio_pago_id = M.medio_de_pago_id
+	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha), QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha), L.local_id,
+			 QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)), QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+			 Lo.localidad_id, C.categoria_local_id, R.repartidor_tipo_movilidad_id, M.medio_de_pago_tipo_id, P.pedido_estado_pedido_id
 END;
 GO
 

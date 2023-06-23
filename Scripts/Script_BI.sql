@@ -135,6 +135,18 @@ FROM sys.objects
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetAnioDeDimTiempo')
 ) DROP FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo;
 
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetRangoEtario')
+) DROP FUNCTION QUERY_SQUAD.GetRangoEtario;
+
+IF EXISTS (
+  SELECT *
+FROM sys.objects
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.GetRangoHorario')
+) DROP FUNCTION QUERY_SQUAD.GetRangoHorario;
+
 ----- DROP HECHOS -----
 IF EXISTS (
   SELECT *
@@ -477,6 +489,25 @@ CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (@idDimTiempo INT) RETURNS INT AS
   )
 END;
 GO
+
+CREATE FUNCTION QUERY_SQUAD.GetRangoEtario (@fechaNacimiento DATETIME) RETURNS INT 
+AS 
+BEGIN
+  RETURN (SELECT rango_etario_id 
+		  FROM QUERY_SQUAD.BI_dim_Rango_Etario RE 
+		  WHERE DATEDIFF(YEAR, @fechaNacimiento, GETDATE()) BETWEEN RE.rango_etario_minimo AND RE.rango_etario_maximo)
+END;
+GO
+
+CREATE FUNCTION QUERY_SQUAD.GetRangoHorario(@hora TIME) RETURNS INT
+AS
+BEGIN
+  RETURN (SELECT rango_horario_id
+  FROM QUERY_SQUAD.BI_dim_Rango_Horario
+  WHERE @hora >= rango_horario_hora_inicio AND @hora /*CONVERT(TIME, @fecha)*/ < rango_horario_hora_fin);
+END;
+GO
+
 
 ----- CREACION PROCEDIMIENTOS -----
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Dia

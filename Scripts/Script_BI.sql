@@ -7,6 +7,14 @@ FROM sys.views
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.v_BI_valor_promedio_mensual_envios')
 ) DROP VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios;
 
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_dia_y_rango_horaio_con_mas_pedidos')
+    DROP VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos;
+
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_monto_total_no_cobrado_por_local')
+    DROP VIEW QUERY_SQUAD.v_BI_monto_total_no_cobrado_por_local;
+
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_calificacion_promedio_mensual_por_local')
+    DROP VIEW QUERY_SQUAD.v_BI_calificacion_promedio_mensual_por_local;
 ----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
@@ -604,9 +612,7 @@ AS
 BEGIN
   INSERT INTO QUERY_SQUAD.BI_dim_Tiempo
     (tiempo_anio, tiempo_mes)
-  SELECT DISTINCT YEAR(pedido_fecha)
-    ,MONTH(pedido_fecha)
-  --Alcanza con este 
+  SELECT DISTINCT YEAR(pedido_fecha) ,MONTH(pedido_fecha) --Alcanza con este 
   FROM QUERY_SQUAD.Pedido
   ORDER BY 1,
   2
@@ -734,11 +740,11 @@ BEGIN
 	AVG(P.pedido_calificacion),
 	AVG(DATEDIFF(minute,p.pedido_fecha, p.pedido_fecha_entrega) - p.pedido_tiempo_estimado)
   FROM QUERY_SQUAD.Pedido P
-    INNER JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id
-    INNER JOIN QUERY_SQUAD.Localidad Lo ON L.local_localidad_id = Lo.localidad_id
-    INNER JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
-    INNER JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
-	INNER JOIN QUERY_SQUAD.Medio_De_Pago M On P.pedido_medio_pago_id = M.medio_de_pago_id
+    JOIN QUERY_SQUAD.Local L ON P.pedido_local_id = L.local_id
+    JOIN QUERY_SQUAD.Localidad Lo ON L.local_localidad_id = Lo.localidad_id
+    JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
+    JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
+	JOIN QUERY_SQUAD.Medio_De_Pago M On P.pedido_medio_pago_id = M.medio_de_pago_id
 	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha), QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha), L.local_id,
 			 QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)), QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
 			 Lo.localidad_id, C.categoria_local_id, R.repartidor_tipo_movilidad_id, M.medio_de_pago_tipo_id, P.pedido_estado_pedido_id
@@ -771,11 +777,84 @@ END;
 GO
 
 ----- CREACION VISTAS -----
+CREATE VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos
+AS
+WITH cantidad_pedidos AS (
+  SELECT
+    t.tiempo_anio, t.tiempo_mes, d.dia_nombre,
+	rh.rango_horario_hora_inicio, rh.rango_horario_hora_fin,
+    l.localidad_nombre, cl.categoria_local_categoria,
+    SUM(hechos_pedidos_cantidad_pedidos) AS cantidad_pedidos
+  FROM
+    QUERY_SQUAD.BI_Hechos_Pedidos hp
+    JOIN QUERY_SQUAD.BI_dim_Tiempo t ON hp.hechos_pedidos_tiempo_id = t.tiempo_id
+    JOIN QUERY_SQUAD.BI_dim_Dia d ON hp.hechos_pedidos_dia_id = d.dia_id
+    JOIN QUERY_SQUAD.BI_dim_Rango_Horario rh ON hp.hechos_pedidos_rango_horario_id = rh.rango_horario_id
+    JOIN QUERY_SQUAD.BI_dim_Localidad l ON hp.hechos_pedidos_localidad_id = l.localidad_id
+    JOIN QUERY_SQUAD.BI_dim_Categoria_Local cl ON hp.hechos_pedidos_categoria_local_id = cl.categoria_local_id
+  GROUP BY
+    t.tiempo_anio, t.tiempo_mes, d.dia_nombre, rh.rango_horario_hora_inicio,
+    rh.rango_horario_hora_fin, l.localidad_nombre, cl.categoria_local_categoria
+)
+SELECT
+  c.tiempo_anio, c.tiempo_mes, c.dia_nombre, c.rango_horario_hora_inicio, c.rango_horario_hora_fin,
+  c.localidad_nombre, c.categoria_local_categoria, c.cantidad_pedidos
+FROM
+  cantidad_pedidos c
+WHERE
+  c.cantidad_pedidos = (
+    SELECT MAX(cantidad_pedidos)
+    FROM cantidad_pedidos
+    WHERE tiempo_anio = c.tiempo_anio AND tiempo_mes = c.tiempo_mes AND localidad_nombre = c.localidad_nombre
+	      AND categoria_local_categoria = c.categoria_local_categoria
+  )
+GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_monto_total_no_cobrado_por_local
+AS
+  SELECT local_nombre, dia_nombre, rango_horario_hora_inicio, rango_horario_hora_fin, sum(hechos_pedidos_costo_total) MontoTotalNoCobrado
+  FROM QUERY_SQUAD.BI_Hechos_Pedidos AS H_Pedidos
+  JOIN QUERY_SQUAD.BI_dim_Local L ON H_Pedidos.hechos_pedidos_local_id = L.local_id
+  JOIN QUERY_SQUAD.BI_dim_Dia D ON H_Pedidos.hechos_pedidos_dia_id = D.dia_id
+  JOIN QUERY_SQUAD.BI_dim_Rango_Horario RH ON H_Pedidos.hechos_pedidos_rango_horario_id = RH.rango_horario_id
+  WHERE H_Pedidos.hechos_pedidos_estado_pedido_id = 2
+  GROUP BY local_nombre, dia_nombre, rango_horario_hora_inicio, rango_horario_hora_fin
+ 
+GO
+
 CREATE VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios
 AS
-  SELECT QUERY_SQUAD.GetMesDeDimTiempo(H_Pedidos.hechos_pedidos_tiempo_id) AS Mes
-    ,AVG(H_Pedidos.hechos_pedidos_valor_promedio_envio) AS ValorPromedio
+  SELECT L.localidad_nombre,T.tiempo_anio AS Anio, T.tiempo_mes AS Mes, 
+         SUM(H_Pedidos.hechos_pedidos_valor_promedio_envio * H_Pedidos.hechos_pedidos_cantidad_pedidos)/SUM(H_Pedidos.hechos_pedidos_cantidad_pedidos) AS ValorPromedioEnvio --Por como se agurapan los datos hay que hacer asi el calulo de promedio
   FROM QUERY_SQUAD.BI_Hechos_Pedidos AS H_Pedidos
-  GROUP BY H_Pedidos.hechos_pedidos_localidad_id,
-  QUERY_SQUAD.GetMesDeDimTiempo(H_Pedidos.hechos_pedidos_tiempo_id)
+  JOIN QUERY_SQUAD.BI_dim_Tiempo T ON H_Pedidos.hechos_pedidos_tiempo_id = T.tiempo_id
+  JOIN QUERY_SQUAD.BI_dim_Localidad L ON L.localidad_id = H_Pedidos.hechos_pedidos_localidad_id
+  GROUP BY L.localidad_nombre,T.tiempo_anio, T.tiempo_mes
 GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_calificacion_promedio_mensual_por_local
+AS
+  SELECT L.local_nombre, T.tiempo_anio AS Anio, T.tiempo_mes AS Mes,
+  SUM(H_Pedidos.hechos_pedidos_calificacion_promedio * H_Pedidos.hechos_pedidos_cantidad_pedidos)/SUM(H_Pedidos.hechos_pedidos_cantidad_pedidos) AS CalificacionPromedio 
+  FROM QUERY_SQUAD.BI_Hechos_Pedidos AS H_Pedidos
+  JOIN QUERY_SQUAD.BI_dim_Tiempo T ON H_Pedidos.hechos_pedidos_tiempo_id = T.tiempo_id
+  JOIN QUERY_SQUAD.BI_dim_Local L ON H_Pedidos.hechos_pedidos_local_id = L.local_id
+  GROUP BY L.local_nombre,T.tiempo_anio, T.tiempo_mes
+GO
+--------------------MIGRACIONES-------------------------------
+EXEC QUERY_SQUAD.BI_migrar_Dia
+EXEC QUERY_SQUAD.BI_migrar_Tipo_Local
+EXEC QUERY_SQUAD.BI_migrar_Categoria_Local
+EXEC QUERY_SQUAD.BI_migrar_Local
+EXEC QUERY_SQUAD.BI_migrar_Localidad
+EXEC QUERY_SQUAD.BI_cargar_Rango_Etario
+EXEC QUERY_SQUAD.BI_migrar_Tipo_Paquete
+EXEC QUERY_SQUAD.BI_migrar_Tiempo
+EXEC QUERY_SQUAD.BI_migrar_Rango_Horario
+EXEC QUERY_SQUAD.BI_migrar_Tipo_Medio_De_Pago
+EXEC QUERY_SQUAD.BI_migrar_Tipo_Movilidad
+EXEC QUERY_SQUAD.BI_migrar_Estado_Envio_Mensajeria
+EXEC QUERY_SQUAD.BI_migrar_Estado_Pedido
+EXEC QUERY_SQUAD.BI_migrar_Estado_Reclamos
+
+EXEC QUERY_SQUAD.BI_migrar_Hechos_Pedidos

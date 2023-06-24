@@ -112,6 +112,14 @@ FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Cupones')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Cupones;
 
+
+IF EXISTS (
+  SELECT *
+FROM sys.procedures
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Mensajeria')
+) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Mensajeria;
+
+
 ----- DROP FUNCIONES -----
 IF EXISTS (
   SELECT *
@@ -422,11 +430,24 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Local
 
 CREATE TABLE QUERY_SQUAD.BI_Hechos_Mensajeria
 (	
-	hechos_mensajeria_tipo_paquete_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Paquete,
 	hechos_mensajeria_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
-	hechos_mensajeria_promedio_mensual_valor decimal(18,2) CONSTRAINT PK_BI_Hechos_Mensajeria PRIMARY KEY(
-		hechos_mensajeria_tipo_paquete_id,
-		hechos_mensajeria_tiempo_id
+	hechos_mensajeria_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
+	hechos_mensajeria_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario,
+	hechos_mensajeria_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
+	hechos_mensajeria_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad,
+	hechos_mensajeria_rango_etaraio_repartidor_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_mensajeria_tipo_paquete_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Paquete,
+	hechos_mensajeria_promedio_mensual_valor_asegurado decimal(18,2),
+	hechos_mensajeria_cantidad_envios INT 
+	
+	CONSTRAINT PK_BI_Hechos_Mensajeria PRIMARY KEY(
+	  hechos_mensajeria_tiempo_id,
+	  hechos_mensajeria_dia_id,
+	  hechos_mensajeria_rango_horario_id,
+	  hechos_mensajeria_localidad_id,
+	  hechos_mensajeria_tipo_movilidad_id,
+ 	  hechos_mensajeria_rango_etaraio_repartidor_id,
+	  hechos_mensajeria_tipo_paquete_id
 	)
 );
 
@@ -520,9 +541,16 @@ GO
 CREATE FUNCTION QUERY_SQUAD.GetRangoHorario(@hora TIME) RETURNS INT
 AS
 BEGIN
-  RETURN (SELECT rango_horario_id
-  FROM QUERY_SQUAD.BI_dim_Rango_Horario
-  WHERE @hora >= rango_horario_hora_inicio AND @hora /*CONVERT(TIME, @fecha)*/ < rango_horario_hora_fin);
+  DECLARE @idRango INT
+  IF (@hora < '22:00:00.0000000')
+  BEGIN
+	SET @idRango = (SELECT rango_horario_id FROM QUERY_SQUAD.BI_dim_Rango_Horario WHERE @hora >= rango_horario_hora_inicio AND @hora < rango_horario_hora_fin);  ---Separada porque esta comparacion no funciona bien para las 00:00:00
+  END
+  ELSE
+  BEGIN 
+	SET @idRango = (SELECT rango_horario_id FROM QUERY_SQUAD.BI_dim_Rango_Horario WHERE rango_horario_hora_inicio = '22:00:00.0000000' AND rango_horario_hora_fin = '00:00:00.0000000')
+  END
+  RETURN @idRango
 END;
 GO
 
@@ -776,6 +804,38 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Mensajeria
+AS
+BEGIN
+	INSERT INTO QUERY_SQUAD.BI_Hechos_Mensajeria
+	(
+	  hechos_mensajeria_tiempo_id,
+	  hechos_mensajeria_dia_id,
+	  hechos_mensajeria_rango_horario_id,
+	  hechos_mensajeria_localidad_id,
+	  hechos_mensajeria_tipo_movilidad_id,
+	  hechos_mensajeria_rango_etaraio_repartidor_id,
+	  hechos_mensajeria_tipo_paquete_id,
+	  hechos_mensajeria_promedio_mensual_valor_asegurado,
+	  hechos_mensajeria_cantidad_envios
+	 )
+	SELECT QUERY_SQUAD.GetDimTiempoParaFecha(E.envio_mensajeria_fecha),
+		QUERY_SQUAD.GetDimDiaParaFecha(E.envio_mensajeria_fecha),
+		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,E.envio_mensajeria_fecha)),
+		E.envio_mensajeria_localidad_id,
+		R.repartidor_tipo_movilidad_id,
+		QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+		E.envio_mensajeria_paquete_id,
+		AVG(E.envio_mensajeria_valor_asegurado),
+		COUNT(DISTINCT E.envio_mensajeria_nro)
+    FROM QUERY_SQUAD.Envio_Mensajeria E
+    JOIN QUERY_SQUAD.Repartidor R ON E.envio_mensajeria_repartidor_id = R.repartidor_id
+	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(E.envio_mensajeria_fecha), QUERY_SQUAD.GetDimDiaParaFecha(E.envio_mensajeria_fecha),
+		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,E.envio_mensajeria_fecha)), E.envio_mensajeria_localidad_id,
+		R.repartidor_tipo_movilidad_id, QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac), E.envio_mensajeria_paquete_id
+END;
+GO
+
 ----- CREACION VISTAS -----
 CREATE VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos
 AS
@@ -841,6 +901,18 @@ AS
   JOIN QUERY_SQUAD.BI_dim_Local L ON H_Pedidos.hechos_pedidos_local_id = L.local_id
   GROUP BY L.local_nombre,T.tiempo_anio, T.tiempo_mes
 GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_promedio_mensual_valor_asegurado
+AS
+  SELECT tp.tipo_paquete_tipo, T.tiempo_anio AS Anio, T.tiempo_mes AS Mes,
+  SUM(H_Mensajeria.hechos_mensajeria_promedio_mensual_valor_asegurado * H_Mensajeria.hechos_mensajeria_cantidad_envios)/SUM(H_Mensajeria.hechos_mensajeria_cantidad_envios) PromedioAsegurado 
+  FROM QUERY_SQUAD.BI_Hechos_Mensajeria AS H_Mensajeria
+  JOIN QUERY_SQUAD.BI_dim_Tiempo T ON H_Mensajeria.hechos_mensajeria_tiempo_id = T.tiempo_id
+  JOIN QUERY_SQUAD.BI_dim_Tipo_Paquete TP ON H_Mensajeria.hechos_mensajeria_tipo_paquete_id = TP.tipo_paquete_id
+  GROUP BY tp.tipo_paquete_tipo,T.tiempo_anio, T.tiempo_mes
+GO
+
+
 --------------------MIGRACIONES-------------------------------
 EXEC QUERY_SQUAD.BI_migrar_Dia
 EXEC QUERY_SQUAD.BI_migrar_Tipo_Local
@@ -858,3 +930,4 @@ EXEC QUERY_SQUAD.BI_migrar_Estado_Pedido
 EXEC QUERY_SQUAD.BI_migrar_Estado_Reclamos
 
 EXEC QUERY_SQUAD.BI_migrar_Hechos_Pedidos
+EXEC QUERY_SQUAD.BI_migrar_Hechos_Mensajeria

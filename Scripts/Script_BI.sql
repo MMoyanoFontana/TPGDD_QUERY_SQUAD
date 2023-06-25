@@ -106,6 +106,12 @@ WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Pedido')
 IF EXISTS (
   SELECT *
 FROM sys.procedures
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Tipo_Reclamos')
+) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Tipo_Reclamos;
+
+IF EXISTS (
+  SELECT *
+FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Pedidos')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Pedidos;
 
@@ -127,6 +133,12 @@ IF EXISTS (
 FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Mensajeria')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Mensajeria;
+
+IF EXISTS (
+  SELECT *
+FROM sys.procedures
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Reclamos')
+) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Reclamos;
 
 
 ----- DROP FUNCIONES -----
@@ -295,6 +307,12 @@ FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_dim_Estado_Reclamos')
 ) DROP TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos;
 
+IF EXISTS (
+  SELECT *
+FROM sys.tables
+WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_dim_Tipo_Reclamo')
+) DROP TABLE QUERY_SQUAD.BI_dim_Tipo_Reclamo;
+
 ----- CREACION DIMENSIONES -----
 CREATE TABLE QUERY_SQUAD.BI_dim_Tiempo
 (
@@ -379,8 +397,14 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Envio_Mensajeria
 
 CREATE TABLE QUERY_SQUAD.BI_dim_Estado_Reclamos
 (
-  estado_reclamos_id INT PRIMARY KEY
-  ,estado_reclamos_estado NVARCHAR(50)
+  estado_reclamos_id INT PRIMARY KEY,
+  estado_reclamos_estado NVARCHAR(50)
+);
+
+CREATE TABLE QUERY_SQUAD.BI_dim_Tipo_Reclamo
+(
+   tipo_reclamo_id INT PRIMARY KEY,
+   tipo_reclamo_tipo NVARCHAR(50)
 );
 
 ----- CREACION HECHOS -----
@@ -469,15 +493,19 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Reclamos
 	hechos_reclamos_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo,
 	hechos_reclamos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
 	hechos_reclamos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
-	hechos_reclamos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario, --ver si necesitamos agregar dim_Tipo_Reclamo
-	hechos_reclamos_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_reclamos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario,
+	hechos_reclamos_rango_etario_operador_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+	hechos_reclamos_tipo_reclamo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Reclamo,
 	hechos_reclamos_cantidad decimal(18,2),
-	hechos_reclamos_tiempo_promedio_resolucion decimal(18,2) CONSTRAINT PK_BI_Hechos_Reclamos PRIMARY KEY(
+	hechos_reclamos_tiempo_promedio_resolucion decimal(18,2)
+	
+	 CONSTRAINT PK_BI_Hechos_Reclamos PRIMARY KEY(
 		hechos_reclamos_tiempo_id,
 		hechos_reclamos_local_id,
 		hechos_reclamos_dia_id,
 		hechos_reclamos_rango_horario_id,
-		hechos_reclamos_rango_etario_id
+		hechos_reclamos_rango_etario_operador_id,
+		hechos_reclamos_tipo_reclamo_id
 	)
 );
 
@@ -744,6 +772,17 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Tipo_Reclamos
+AS
+BEGIN
+  INSERT INTO QUERY_SQUAD.BI_dim_Tipo_Reclamo
+    (tipo_reclamo_id, tipo_reclamo_tipo)
+  SELECT tipo_reclamo_id, tipo_reclamo_tipo
+  FROM QUERY_SQUAD.Tipo_Reclamo
+END;
+GO
+
+
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Pedidos
 AS
 BEGIN
@@ -852,6 +891,38 @@ BEGIN
 		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,E.envio_mensajeria_fecha)), E.envio_mensajeria_localidad_id,
 		R.repartidor_tipo_movilidad_id, QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac), 
 		E.envio_mensajeria_paquete_id, E.envio_mensajeria_estado_envio_id
+END;
+GO
+
+CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Reclamos
+AS
+BEGIN
+	INSERT INTO QUERY_SQUAD.BI_Hechos_Reclamos
+	( 
+	hechos_reclamos_tiempo_id,
+	hechos_reclamos_local_id,
+	hechos_reclamos_dia_id,
+	hechos_reclamos_rango_horario_id,
+	hechos_reclamos_rango_etario_operador_id,
+	hechos_reclamos_tipo_reclamo_id,
+	hechos_reclamos_cantidad,
+	hechos_reclamos_tiempo_promedio_resolucion
+	)
+	SELECT 
+	    QUERY_SQUAD.GetDimTiempoParaFecha(R.reclamo_fecha),
+		P.pedido_local_id,
+		QUERY_SQUAD.GetDimDiaParaFecha(R.reclamo_fecha),
+		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)),
+		QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac),
+		R.reclamo_tipo_reclamo_id,
+		COUNT(DISTINCT R.reclamo_nro),
+		AVG((DATEDIFF(minute,R.reclamo_fecha, R.reclamo_fecha_solucion)))
+    FROM QUERY_SQUAD.Reclamo R
+	JOIN QUERY_SQUAD.Pedido P on R.reclamo_pedido_nro = P.pedido_nro	
+	JOIN QUERY_SQUAD.Operador_Reclamo O ON R.reclamo_operador_id = O.operador_reclamo_id
+	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(R.reclamo_fecha), P.pedido_local_id, QUERY_SQUAD.GetDimDiaParaFecha(R.reclamo_fecha),
+		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)), QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac),
+		R.reclamo_tipo_reclamo_id
 END;
 GO
 
@@ -1021,6 +1092,8 @@ EXEC QUERY_SQUAD.BI_migrar_Tipo_Movilidad
 EXEC QUERY_SQUAD.BI_migrar_Estado_Envio_Mensajeria
 EXEC QUERY_SQUAD.BI_migrar_Estado_Pedido
 EXEC QUERY_SQUAD.BI_migrar_Estado_Reclamos
+EXEC QUERY_SQUAD.BI_migrar_Tipo_Reclamos
 
 EXEC QUERY_SQUAD.BI_migrar_Hechos_Pedidos
 EXEC QUERY_SQUAD.BI_migrar_Hechos_Mensajeria
+EXEC QUERY_SQUAD.BI_migrar_Hechos_Reclamos

@@ -31,6 +31,12 @@ IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_reclamos_por_local')
 IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_tiempo_promedio_resolucion')
     DROP VIEW QUERY_SQUAD.v_BI_tiempo_promedio_resolucion;
 
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_monto_total_cupones_utilizados')
+    DROP VIEW QUERY_SQUAD.v_BI_monto_total_cupones_utilizados;
+
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_monto_mesual_cupones_reclamos')
+    DROP VIEW QUERY_SQUAD.v_BI_monto_mesual_cupones_reclamos;
+
 ----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
@@ -127,13 +133,6 @@ IF EXISTS (
 FROM sys.procedures
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Estado_Reclamos')
 ) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Estado_Reclamos;
-
-IF EXISTS (
-  SELECT *
-FROM sys.procedures
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_migrar_Hechos_Cupones')
-) DROP PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Cupones;
-
 
 IF EXISTS (
   SELECT *
@@ -338,7 +337,7 @@ CREATE TABLE QUERY_SQUAD.BI_dim_Rango_Horario
 (
   rango_horario_id INT IDENTITY PRIMARY KEY
   ,rango_horario_hora_inicio TIME
-  ,rango_horario_hora_fin TIME,
+  ,rango_horario_hora_fin TIME
 );
 
 CREATE TABLE QUERY_SQUAD.BI_dim_Localidad
@@ -421,14 +420,16 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 	hechos_pedidos_dia_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Dia,
 	hechos_pedidos_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local,
 	hechos_pedidos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario,
-	hechos_pedidos_rango_etario_repartidor_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
-	hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
+	hechos_pedidos_rango_etario_usuario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+  hechos_pedidos_rango_etario_repartidor_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
+  hechos_pedidos_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad,
 	hechos_pedidos_categoria_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Categoria_Local,
 	hechos_pedidos_tipo_movilidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Movilidad,
 	hechos_pedidos_tipo_medio_pago_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Medio_De_Pago,
 	hechos_pedidos_estado_pedido_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Estado_Pedido,
 	hechos_pedidos_cantidad_pedidos INT,
 	hechos_pedidos_costo_total DECIMAL(18, 2),
+  hechos_pedidos_monto_total_cupones DECIMAL(18,2),
 	hechos_pedidos_valor_promedio_envio DECIMAL(18, 2),
 	hechos_pedidos_calificacion_promedio DECIMAL (18,2),
 	hechos_pedidos_desvio_promedio_entrega DECIMAL (18,2)
@@ -438,6 +439,7 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 		hechos_pedidos_dia_id,
 		hechos_pedidos_local_id,
 		hechos_pedidos_rango_horario_id,
+    hechos_pedidos_rango_etario_usuario_id,
 		hechos_pedidos_rango_etario_repartidor_id,
 		hechos_pedidos_localidad_id,
 		hechos_pedidos_categoria_local_id,
@@ -504,6 +506,7 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Reclamos
 	hechos_reclamos_rango_etario_operador_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario,
 	hechos_reclamos_tipo_reclamo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Reclamo,
 	hechos_reclamos_cantidad decimal(18,2),
+  hechos_reclamos_monto_generado_por_cupon decimal(18,2),
 	hechos_reclamos_tiempo_promedio_resolucion decimal(18,2)
 	
 	 CONSTRAINT PK_BI_Hechos_Reclamos PRIMARY KEY(
@@ -577,12 +580,12 @@ CREATE FUNCTION QUERY_SQUAD.GetAnioDeDimTiempo (@idDimTiempo INT) RETURNS INT AS
 END;
 GO
 
-CREATE FUNCTION QUERY_SQUAD.GetRangoEtario (@fechaNacimiento DATETIME) RETURNS INT 
+CREATE FUNCTION QUERY_SQUAD.GetRangoEtario (@fechaNacimiento DATETIME, @fechaOperacion DATETIME) RETURNS INT 
 AS 
 BEGIN
   RETURN (SELECT rango_etario_id 
 		  FROM QUERY_SQUAD.BI_dim_Rango_Etario RE 
-		  WHERE DATEDIFF(YEAR, @fechaNacimiento, GETDATE()) BETWEEN RE.rango_etario_minimo AND RE.rango_etario_maximo)
+		  WHERE DATEDIFF(YEAR, @fechaNacimiento, @fechaOperacion) BETWEEN RE.rango_etario_minimo AND RE.rango_etario_maximo)
 END;
 GO
 
@@ -799,6 +802,7 @@ BEGIN
     hechos_pedidos_dia_id,
     hechos_pedidos_local_id,
     hechos_pedidos_rango_horario_id,
+    hechos_pedidos_rango_etario_usuario_id,
 	hechos_pedidos_rango_etario_repartidor_id,
     hechos_pedidos_localidad_id,
     hechos_pedidos_categoria_local_id,
@@ -807,6 +811,7 @@ BEGIN
 	hechos_pedidos_estado_pedido_id,
     hechos_pedidos_cantidad_pedidos,
     hechos_pedidos_costo_total,
+    hechos_pedidos_monto_total_cupones,
     hechos_pedidos_valor_promedio_envio,
 	hechos_pedidos_calificacion_promedio,
 	hechos_pedidos_desvio_promedio_entrega
@@ -815,7 +820,8 @@ BEGIN
     QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha),
     L.local_id,
     QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)),
-	QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+    QUERY_SQUAD.GetRangoEtario(U.usuario_fecha_nac,P.pedido_fecha),
+	QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac,P.pedido_fecha),
     Lo.localidad_id,
     C.categoria_local_id,
     R.repartidor_tipo_movilidad_id,
@@ -823,6 +829,7 @@ BEGIN
 	P.pedido_estado_pedido_id,
     COUNT(DISTINCT P.pedido_nro),
     SUM(P.pedido_total_servicio),
+    SUM(P.pedido_total_cupones),
     AVG(P.pedido_precio_envio),
 	AVG(P.pedido_calificacion),
 	AVG(ABS(DATEDIFF(minute,p.pedido_fecha, p.pedido_fecha_entrega) - p.pedido_tiempo_estimado))
@@ -832,34 +839,10 @@ BEGIN
     JOIN QUERY_SQUAD.Categoria_Local C ON L.local_categoria_local_id = C.categoria_local_id
     JOIN QUERY_SQUAD.Repartidor R ON P.pedido_repartidor_id = R.repartidor_id
 	JOIN QUERY_SQUAD.Medio_De_Pago M On P.pedido_medio_pago_id = M.medio_de_pago_id
+  JOIN QUERY_SQUAD.Usuario U ON U.usuario_id = P.pedido_usuario_id
 	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(P.pedido_fecha), QUERY_SQUAD.GetDimDiaParaFecha(P.pedido_fecha), L.local_id,
-			 QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)), QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+			 QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,P.pedido_fecha)), QUERY_SQUAD.GetRangoEtario(U.usuario_fecha_nac,p.pedido_fecha), QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac,pedido_fecha),
 			 Lo.localidad_id, C.categoria_local_id, R.repartidor_tipo_movilidad_id, M.medio_de_pago_tipo_id, P.pedido_estado_pedido_id
-END;
-GO
-
-
-CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Hechos_Cupones
-AS
-BEGIN
-	INSERT INTO QUERY_SQUAD.BI_Hechos_Cupones
-	(
-	 hechos_cupones_tiempo_id,
-	 hechos_cupones_rango_etario_id,
-	 hechos_cupones_monto_total,
-	 hechos_cupones_monto_reclamos
-	)
-	SELECT QUERY_SQUAD.GetDimTiempoParaFecha(C.cupon_fecha_alta),
-	NULL, --ver como sacar el rango etario
-	P.pedido_total_cupones,
-	ISNULL((
-		SELECT sum(cupon_monto)
-		FROM QUERY_SQUAD.Cupon_Reclamo INNER JOIN QUERY_SQUAD.Cupon ON cupon_reclamo_cupon_nro = cupon_nro
-		WHERE cupon_nro = C.cupon_nro
-	),0)
-	FROM QUERY_SQUAD.Pedido_Cupones PC 
-		INNER JOIN QUERY_SQUAD.Pedido P ON PC.pedido_cupones_pedido_nro = P.pedido_nro
-		INNER JOIN  QUERY_SQUAD.Cupon C ON PC.pedido_cupones_cupon_id = C.cupon_nro
 END;
 GO
 
@@ -886,7 +869,7 @@ BEGIN
 		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,E.envio_mensajeria_fecha)),
 		E.envio_mensajeria_localidad_id,
 		R.repartidor_tipo_movilidad_id,
-		QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac),
+		QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac,E.envio_mensajeria_fecha),
 		E.envio_mensajeria_paquete_id,
 		E.envio_mensajeria_estado_envio_id,
 		COUNT(DISTINCT E.envio_mensajeria_nro),
@@ -896,7 +879,7 @@ BEGIN
     JOIN QUERY_SQUAD.Repartidor R ON E.envio_mensajeria_repartidor_id = R.repartidor_id
 	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(E.envio_mensajeria_fecha), QUERY_SQUAD.GetDimDiaParaFecha(E.envio_mensajeria_fecha),
 		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,E.envio_mensajeria_fecha)), E.envio_mensajeria_localidad_id,
-		R.repartidor_tipo_movilidad_id, QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac), 
+		R.repartidor_tipo_movilidad_id, QUERY_SQUAD.GetRangoEtario(R.repartidor_fecha_nac,E.envio_mensajeria_fecha), 
 		E.envio_mensajeria_paquete_id, E.envio_mensajeria_estado_envio_id
 END;
 GO
@@ -913,22 +896,27 @@ BEGIN
 	hechos_reclamos_rango_etario_operador_id,
 	hechos_reclamos_tipo_reclamo_id,
 	hechos_reclamos_cantidad,
-	hechos_reclamos_tiempo_promedio_resolucion
+	hechos_reclamos_tiempo_promedio_resolucion,
+  hechos_reclamos_monto_generado_por_cupon
 	)
 	SELECT 
 	    QUERY_SQUAD.GetDimTiempoParaFecha(R.reclamo_fecha),
 		P.pedido_local_id,
 		QUERY_SQUAD.GetDimDiaParaFecha(R.reclamo_fecha),
 		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)),
-		QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac),
+		QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac, R.reclamo_fecha),
 		R.reclamo_tipo_reclamo_id,
 		COUNT(DISTINCT R.reclamo_nro),
-		AVG((DATEDIFF(minute,R.reclamo_fecha, R.reclamo_fecha_solucion)))
-    FROM QUERY_SQUAD.Reclamo R
-	JOIN QUERY_SQUAD.Pedido P on R.reclamo_pedido_nro = P.pedido_nro	
+		AVG((DATEDIFF(minute,R.reclamo_fecha, R.reclamo_fecha_solucion))),
+    SUM(isnull(cupon_monto, 0))
+    
+  FROM QUERY_SQUAD.Reclamo R
+  LEFT JOIN QUERY_SQUAD.Cupon_Reclamo ON  reclamo_nro = cupon_reclamo_reclamo_id
+	JOIN QUERY_SQUAD.Cupon ON cupon_nro = cupon_reclamo_cupon_nro	
+  JOIN QUERY_SQUAD.Pedido P on R.reclamo_pedido_nro = P.pedido_nro
 	JOIN QUERY_SQUAD.Operador_Reclamo O ON R.reclamo_operador_id = O.operador_reclamo_id
 	GROUP BY QUERY_SQUAD.GetDimTiempoParaFecha(R.reclamo_fecha), P.pedido_local_id, QUERY_SQUAD.GetDimDiaParaFecha(R.reclamo_fecha),
-		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)), QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac),
+		QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)), QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac, R.reclamo_fecha),
 		R.reclamo_tipo_reclamo_id
 END;
 GO
@@ -936,11 +924,11 @@ GO
 ----- CREACION VISTAS -----
 CREATE VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos
 AS
-/* Obtiene la cantidad de pedidos Y luego se queda la mayor de esas*/
+/* Obtiene primero la cantidad de pedidos Y luego se queda la mayor de esas*/
 WITH cantidad_pedidos AS (
   SELECT
     t.tiempo_anio, t.tiempo_mes, d.dia_nombre,
-	rh.rango_horario_hora_inicio, rh.rango_horario_hora_fin,
+	  rh.rango_horario_hora_inicio, rh.rango_horario_hora_fin,
     l.localidad_nombre, cl.categoria_local_categoria,
     SUM(hechos_pedidos_cantidad_pedidos) AS cantidad_pedidos
   FROM
@@ -1012,6 +1000,17 @@ AS
 	GROUP BY TM.tipo_movilidad_tipo, D.dia_nombre, RH.rango_horario_hora_inicio, RH.rango_horario_hora_fin
 GO
 
+CREATE VIEW QUERY_SQUAD.v_BI_monto_total_cupones_utilizados
+AS
+  SELECT tiempo_anio AS anio, tiempo_mes AS mes, rango_etario_minimo, rango_etario_maximo,
+         SUM(hechos_pedidos_monto_total_cupones) montoTotalCupones
+  FROM 
+  QUERY_SQUAD.BI_Hechos_Pedidos
+  JOIN QUERY_SQUAD.BI_dim_Tiempo ON hechos_pedidos_tiempo_id = tiempo_id
+  JOIN QUERY_SQUAD.BI_dim_Rango_Etario ON hechos_pedidos_rango_etario_usuario_id = rango_etario_id
+  GROUP BY tiempo_anio, tiempo_mes, rango_etario_minimo, rango_etario_maximo
+GO
+
 CREATE VIEW QUERY_SQUAD.v_BI_valor_promedio_mensual_envios
 AS
   SELECT L.localidad_nombre AS Localidad,T.tiempo_anio AS Anio, T.tiempo_mes AS Mes, 
@@ -1045,7 +1044,7 @@ AS
 		SUM(cantidad_entregas) * 100/CAST(
 			(SELECT SUM(hechos_pedidos_cantidad_pedidos) FROM QUERY_SQUAD.BI_Hechos_Pedidos where hechos_pedidos_tiempo_id = t.tiempo_id AND hechos_pedidos_estado_pedido_id = 1) +  
 			(SELECT SUM(hechos_mensajeria_cantidad_envios) FROM QUERY_SQUAD.BI_Hechos_Mensajeria where hechos_mensajeria_tiempo_id  = t.tiempo_id AND hechos_mensajeria_estado_envio_id = 1)
-		 AS FLOAT) AS porcentajeDelTotalMensual ---Esto es bastante feo pero si lo hago en una funcion tarda años despues la vista 
+		 AS FLOAT) AS porcentajeDelTotalMensual ---Esto es bastante feo pero si lo hago en una funcion tarda anios despues la vista 
 	FROM
 		(
 		SELECT
@@ -1103,6 +1102,16 @@ AS
   JOIN QUERY_SQUAD.BI_dim_Tipo_Reclamo ON hechos_reclamos_tipo_reclamo_id = tipo_reclamo_id 
   GROUP BY tiempo_anio, tiempo_mes, tipo_reclamo_tipo, rango_etario_minimo, rango_etario_maximo
 GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_monto_mesual_cupones_reclamos
+AS  
+  SELECT tiempo_anio AS Anio, tiempo_mes AS Mes, SUM(hechos_reclamos_monto_generado_por_cupon) AS MontoMensualCuponReclamo 
+  FROM 
+  QUERY_SQUAD.BI_Hechos_Reclamos
+  JOIN QUERY_SQUAD.BI_dim_Tiempo ON hechos_reclamos_tiempo_id = tiempo_id
+  GROUP BY tiempo_anio, tiempo_mes
+GO
+
 
 --------------------MIGRACIONES-------------------------------
 EXEC QUERY_SQUAD.BI_migrar_Dia

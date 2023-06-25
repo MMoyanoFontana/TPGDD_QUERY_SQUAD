@@ -28,6 +28,9 @@ IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_porcentaje_de_entregas')
 IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_reclamos_por_local')
     DROP VIEW QUERY_SQUAD.v_BI_reclamos_por_local;
 
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_tiempo_promedio_resolucion')
+    DROP VIEW QUERY_SQUAD.v_BI_tiempo_promedio_resolucion;
+
 ----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
@@ -1084,10 +1087,21 @@ AS
   SELECT dia_nombre As Dia, rango_horario_hora_inicio, rango_horario_hora_fin, local_nombre AS LOCAL,
   SUM(hechos_reclamos_cantidad) AS cantidadReclamos
   FROM QUERY_SQUAD.BI_Hechos_Reclamos
-  JOIN QUERY_SQUAD.BI_dim_Dia D ON hechos_reclamos_dia_id = D.dia_id
+  JOIN QUERY_SQUAD.BI_dim_Dia ON hechos_reclamos_dia_id = dia_id
   JOIN QUERY_SQUAD.BI_dim_Rango_Horario ON hechos_reclamos_rango_horario_id = rango_horario_id 
   JOIN QUERY_SQUAD.BI_dim_Local ON hechos_reclamos_local_id = local_id 
-  GROUP By dia_nombre, rango_horario_hora_inicio, rango_horario_hora_fin, local_nombre
+  GROUP BY dia_nombre, rango_horario_hora_inicio, rango_horario_hora_fin, local_nombre
+GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_tiempo_promedio_resolucion
+AS
+  SELECT tiempo_anio AS Anio, tiempo_mes AS mes, tipo_reclamo_tipo tipoReclamo, rango_etario_minimo, rango_etario_maximo,
+  SUM(hechos_reclamos_cantidad * hechos_reclamos_tiempo_promedio_resolucion)/ SUM(hechos_reclamos_cantidad) AS tiempoPromedioResolucion
+  FROM QUERY_SQUAD.BI_Hechos_Reclamos
+  JOIN QUERY_SQUAD.BI_dim_Tiempo ON hechos_reclamos_tiempo_id = tiempo_id
+  JOIN QUERY_SQUAD.BI_dim_Rango_Etario ON hechos_reclamos_rango_etario_operador_id = rango_etario_id 
+  JOIN QUERY_SQUAD.BI_dim_Tipo_Reclamo ON hechos_reclamos_tipo_reclamo_id = tipo_reclamo_id 
+  GROUP BY tiempo_anio, tiempo_mes, tipo_reclamo_tipo, rango_etario_minimo, rango_etario_maximo
 GO
 
 --------------------MIGRACIONES-------------------------------

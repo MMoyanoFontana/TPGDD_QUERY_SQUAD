@@ -24,6 +24,10 @@ IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_desvio_promedio_tiempo_ent
 
 IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_porcentaje_de_entregas')
     DROP VIEW QUERY_SQUAD.v_BI_porcentaje_de_entregas;
+
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'v_BI_reclamos_por_local')
+    DROP VIEW QUERY_SQUAD.v_BI_reclamos_por_local;
+
 ----- DROP PROCEDIMIENTOS -----
 IF EXISTS (
   SELECT *
@@ -1065,8 +1069,6 @@ AS
 	GROUP BY t.tiempo_anio, t.tiempo_mes, R.rango_etario_minimo , R.rango_etario_maximo, L.localidad_nombre, t.tiempo_id
 GO
 
-
-
 CREATE VIEW QUERY_SQUAD.v_BI_promedio_mensual_valor_asegurado
 AS
   SELECT tp.tipo_paquete_tipo As TipoPaquete, T.tiempo_anio AS Anio, T.tiempo_mes AS Mes,
@@ -1075,6 +1077,17 @@ AS
   JOIN QUERY_SQUAD.BI_dim_Tiempo T ON H_Mensajeria.hechos_mensajeria_tiempo_id = T.tiempo_id
   JOIN QUERY_SQUAD.BI_dim_Tipo_Paquete TP ON H_Mensajeria.hechos_mensajeria_tipo_paquete_id = TP.tipo_paquete_id
   GROUP BY tp.tipo_paquete_tipo,T.tiempo_anio, T.tiempo_mes
+GO
+
+CREATE VIEW QUERY_SQUAD.v_BI_reclamos_por_local
+AS
+  SELECT dia_nombre As Dia, rango_horario_hora_inicio, rango_horario_hora_fin, local_nombre AS LOCAL,
+  SUM(hechos_reclamos_cantidad) AS cantidadReclamos
+  FROM QUERY_SQUAD.BI_Hechos_Reclamos
+  JOIN QUERY_SQUAD.BI_dim_Dia D ON hechos_reclamos_dia_id = D.dia_id
+  JOIN QUERY_SQUAD.BI_dim_Rango_Horario ON hechos_reclamos_rango_horario_id = rango_horario_id 
+  JOIN QUERY_SQUAD.BI_dim_Local ON hechos_reclamos_local_id = local_id 
+  GROUP By dia_nombre, rango_horario_hora_inicio, rango_horario_hora_fin, local_nombre
 GO
 
 --------------------MIGRACIONES-------------------------------

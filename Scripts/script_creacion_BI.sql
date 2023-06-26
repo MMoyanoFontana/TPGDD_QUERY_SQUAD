@@ -8,8 +8,8 @@ WHERE name = 'v_BI_valor_promedio_mensual_envios')
 
 IF EXISTS (SELECT *
 FROM sys.views
-WHERE name = 'v_BI_dia_y_rango_horaio_con_mas_pedidos')
-  DROP VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos;
+WHERE name = 'v_BI_dia_y_rango_horario_con_mas_pedidos')
+  DROP VIEW QUERY_SQUAD.v_BI_dia_y_rango_horario_con_mas_pedidos;
 
 IF EXISTS (SELECT *
 FROM sys.views
@@ -218,18 +218,6 @@ WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Pedidos')
 IF EXISTS (
   SELECT *
 FROM sys.tables
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Cupones')
-) DROP TABLE QUERY_SQUAD.BI_Hechos_Cupones;
-
-IF EXISTS (
-  SELECT *
-FROM sys.tables
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Local')
-) DROP TABLE QUERY_SQUAD.BI_Hechos_Local;
-
-IF EXISTS (
-  SELECT *
-FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Mensajeria')
 ) DROP TABLE QUERY_SQUAD.BI_Hechos_Mensajeria;
 
@@ -238,12 +226,6 @@ IF EXISTS (
 FROM sys.tables
 WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Reclamos')
 ) DROP TABLE QUERY_SQUAD.BI_Hechos_Reclamos;
-
-IF EXISTS (
-  SELECT *
-FROM sys.tables
-WHERE object_id = OBJECT_ID('QUERY_SQUAD.BI_Hechos_Repartidores')
-) DROP TABLE QUERY_SQUAD.BI_Hechos_Repartidores;
 
 ----- DROP DIMENSIONES -----
 IF EXISTS (
@@ -466,31 +448,6 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Pedidos
 	)
 );
 
-CREATE TABLE QUERY_SQUAD.BI_Hechos_Cupones
-(
-  hechos_cupones_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
-  ,hechos_cupones_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario--ver si necesitamos agregar dim_Tipo_Cupon
-  ,hechos_cupones_monto_total DECIMAL(18,2)
-  ,hechos_cupones_monto_reclamos DECIMAL(18,2)
-
-    CONSTRAINT PK_BI_Hechos_Cupones PRIMARY KEY(
-		hechos_cupones_tiempo_id,
-		hechos_cupones_rango_etario_id
-	)
-);
-
-CREATE TABLE QUERY_SQUAD.BI_Hechos_Local
-(
-  hechos_local_local_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Local
-  ,hechos_local_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
-  ,hechos_local_promedio_calificacion DECIMAL(18,2)
-
-    CONSTRAINT PK_BI_Hechos_Local PRIMARY KEY(
-		hechos_local_local_id,
-		hechos_local_tiempo_id
-	)
-);
-
 CREATE TABLE QUERY_SQUAD.BI_Hechos_Mensajeria
 (
   hechos_mensajeria_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
@@ -525,6 +482,7 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Reclamos
   ,hechos_reclamos_rango_horario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Horario
   ,hechos_reclamos_rango_etario_operador_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario
   ,hechos_reclamos_tipo_reclamo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tipo_Reclamo
+  ,hechos_reclamos_estado_reclamo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Estado_Reclamos
   ,hechos_reclamos_cantidad DECIMAL(18,2)
   ,hechos_reclamos_monto_generado_por_cupon DECIMAL(18,2)
   ,hechos_reclamos_tiempo_promedio_resolucion DECIMAL(18,2)
@@ -535,21 +493,8 @@ CREATE TABLE QUERY_SQUAD.BI_Hechos_Reclamos
 		hechos_reclamos_dia_id,
 		hechos_reclamos_rango_horario_id,
 		hechos_reclamos_rango_etario_operador_id,
-		hechos_reclamos_tipo_reclamo_id
-	)
-);
-
-CREATE TABLE QUERY_SQUAD.BI_Hechos_Repartidores
-(
-  hechos_repartidores_rango_etario_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Rango_Etario
-  ,hechos_repartidores_localidad_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Localidad
-  ,hechos_repartidores_tiempo_id INT FOREIGN KEY REFERENCES QUERY_SQUAD.BI_dim_Tiempo
-  ,hechos_repartidores_porcentaje_pedidos_y_mensajeria_entregados DECIMAL(18,2)
-
-    CONSTRAINT PK_BI_Hechos_Repartidores PRIMARY KEY(
-		hechos_repartidores_rango_etario_id,
-		hechos_repartidores_localidad_id,
-		hechos_repartidores_tiempo_id
+		hechos_reclamos_tipo_reclamo_id,
+		hechos_reclamos_estado_reclamo_id
 	)
 );
 GO
@@ -942,6 +887,7 @@ BEGIN
     hechos_reclamos_rango_horario_id,
     hechos_reclamos_rango_etario_operador_id,
     hechos_reclamos_tipo_reclamo_id,
+	hechos_reclamos_estado_reclamo_id,
     hechos_reclamos_cantidad,
     hechos_reclamos_tiempo_promedio_resolucion,
     hechos_reclamos_monto_generado_por_cupon
@@ -953,6 +899,7 @@ BEGIN
     ,QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha))
     ,QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac, R.reclamo_fecha)
     ,R.reclamo_tipo_reclamo_id
+	,R.reclamo_estado_reclamo_id
     ,COUNT(DISTINCT R.reclamo_nro)
     ,AVG((DATEDIFF(minute,R.reclamo_fecha, R.reclamo_fecha_solucion)))
     ,SUM(isnull(cupon_monto, 0))
@@ -966,12 +913,12 @@ BEGIN
     QUERY_SQUAD.GetDimDiaParaFecha(R.reclamo_fecha),
     QUERY_SQUAD.GetRangoHorario(CONVERT(TIME,R.reclamo_fecha)), 
     QUERY_SQUAD.GetRangoEtario(O.operador_reclamo_fecha_nac, R.reclamo_fecha),
-    R.reclamo_tipo_reclamo_id
+    R.reclamo_tipo_reclamo_id, R.reclamo_estado_reclamo_id 
 END;
 GO
 
 ----- CREACION VISTAS -----
-CREATE VIEW QUERY_SQUAD.v_BI_dia_y_rango_horaio_con_mas_pedidos
+CREATE VIEW QUERY_SQUAD.v_BI_dia_y_rango_horario_con_mas_pedidos
 AS
   /* Obtiene primero la cantidad de pedidos Y luego se queda la mayor de esas*/
   WITH

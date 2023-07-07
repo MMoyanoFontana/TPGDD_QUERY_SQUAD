@@ -582,6 +582,36 @@ BEGIN
 END;
 GO
 
+---CARGA CATEGORIAS---
+PRINT('CARGANDO CATEGORIAS DE LOCAL')
+INSERT INTO QUERY_SQUAD.Categoria_Local (categoria_local_tipo_local_id, categoria_local_categoria)
+VALUES 
+ (1, 'parrilla'),
+ (1, 'heladeria'),
+ (1, 'comida rapida'),
+ (2, 'minimercado'),
+ (2, 'supermercado')
+
+UPDATE QUERY_SQUAD.Local
+SET local_categoria_local_id = 1
+WHERE local_tipo_local_id = 1 AND local_id < 60
+
+UPDATE QUERY_SQUAD.Local
+SET local_categoria_local_id = 2
+WHERE local_tipo_local_id = 1 AND local_id BETWEEN 60 AND 120
+
+UPDATE QUERY_SQUAD.Local
+SET local_categoria_local_id = 3
+WHERE local_tipo_local_id = 1 AND local_id > 120
+
+UPDATE QUERY_SQUAD.Local
+SET local_categoria_local_id = 4
+WHERE local_tipo_local_id = 2 AND local_id < 350
+
+UPDATE QUERY_SQUAD.Local
+SET local_categoria_local_id = 5
+WHERE local_tipo_local_id = 2 AND local_id >= 350
+GO
 
 ----- CREACION PROCEDIMIENTOS -----
 CREATE PROCEDURE QUERY_SQUAD.BI_migrar_Dia
